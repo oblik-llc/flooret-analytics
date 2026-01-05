@@ -1,0 +1,900 @@
+version: 2
+sources:
+- name: ft_facebook_ads_facebook_ads
+  description: 'Facebook/Meta Ads performance data for measuring paid social ROI. Tracks campaigns, ad sets, ads, and conversions across Facebook, Instagram, Messenger, and Audience Network.
+
+    '
+  tables:
+  - name: facebook_ads__account_report
+    description: Daily account-level performance metrics aggregated across all campaigns
+    columns:
+    - name: source_relation
+      description: Source connector identifier for multi-source dbt projects
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: date_day
+      description: Date of the performance metrics (Pacific time)
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: account_id
+      description: Unique Facebook Ads account ID
+      meta:
+        semantic_type: identifier
+    - name: account_name
+      description: Display name of the ad account
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: account_status
+      description: Account status (ACTIVE, DISABLED)
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: business_country_code
+      description: Country code for the business
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: created_at
+      description: Timestamp when account was created
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: currency
+      description: Currency used for billing (USD, EUR, etc.)
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: timezone_name
+      description: Timezone of the ad account
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: clicks
+      description: Number of clicks on ads
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: impressions
+      description: Number of times ads were shown
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: spend
+      description: Amount spent in account currency
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: conversions
+      description: Total number of conversions (purchases, leads, etc.)
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: conversions_value
+      description: Total value of conversions in account currency
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+  - name: facebook_ads__ad_report
+    description: Daily ad-level performance metrics with creative and targeting details
+    columns:
+    - name: source_relation
+      description: Source connector identifier
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: date_day
+      description: Date of the performance metrics
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: account_id
+      description: Facebook Ads account ID
+      meta:
+        semantic_type: identifier
+    - name: account_name
+      description: Display name of the ad account
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: campaign_id
+      description: Unique campaign ID
+      meta:
+        semantic_type: identifier
+    - name: campaign_name
+      description: Campaign name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: ad_set_id
+      description: Unique ad set ID (contains targeting and budget)
+      meta:
+        semantic_type: identifier
+    - name: ad_set_name
+      description: Ad set name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: ad_id
+      description: Unique ad ID (specific creative)
+      meta:
+        semantic_type: identifier
+    - name: ad_name
+      description: Ad name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: conversion_domain
+      description: Domain where conversions occurred
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: clicks
+      description: Number of clicks on this ad
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: impressions
+      description: Number of times this ad was shown
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: spend
+      description: Amount spent on this ad
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: conversions
+      description: Conversions from this ad
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: conversions_value
+      description: Value of conversions from this ad
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+  - name: facebook_ads__ad_set_report
+    description: Daily ad set performance with budget and optimization details
+    columns:
+    - name: source_relation
+      description: Source connector identifier
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: date_day
+      description: Date of the performance metrics
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: account_id
+      description: Facebook Ads account ID
+      meta:
+        semantic_type: identifier
+    - name: account_name
+      description: Display name of the ad account
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: campaign_id
+      description: Unique campaign ID
+      meta:
+        semantic_type: identifier
+    - name: campaign_name
+      description: Campaign name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: ad_set_id
+      description: Unique ad set ID
+      meta:
+        semantic_type: identifier
+    - name: ad_set_name
+      description: Ad set name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: start_at
+      description: Ad set start date
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: end_at
+      description: Ad set end date (null if ongoing)
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: bid_strategy
+      description: Bidding strategy (LOWEST_COST, COST_CAP, etc.)
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: daily_budget
+      description: Daily budget for the ad set
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: budget_remaining
+      description: Remaining budget for the ad set
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: optimization_goal
+      description: Optimization goal (CONVERSIONS, LINK_CLICKS, REACH, etc.)
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: clicks
+      description: Number of clicks
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: impressions
+      description: Number of impressions
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: spend
+      description: Amount spent
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: conversions
+      description: Total conversions
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: conversions_value
+      description: Value of conversions
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+  - name: facebook_ads__campaign_report
+    description: Daily campaign-level performance with budget and status
+    columns:
+    - name: source_relation
+      description: Source connector identifier
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: date_day
+      description: Date of the performance metrics
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: account_id
+      description: Facebook Ads account ID
+      meta:
+        semantic_type: identifier
+    - name: account_name
+      description: Display name of the ad account
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: campaign_id
+      description: Unique campaign ID
+      meta:
+        semantic_type: identifier
+    - name: campaign_name
+      description: Campaign name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: start_at
+      description: Campaign start date
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: end_at
+      description: Campaign end date (null if ongoing)
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: status
+      description: Campaign status (ACTIVE, PAUSED, DELETED)
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: daily_budget
+      description: Daily budget for the campaign
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: lifetime_budget
+      description: Total lifetime budget for the campaign
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: budget_remaining
+      description: Remaining budget for the campaign
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: clicks
+      description: Number of clicks
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: impressions
+      description: Number of impressions
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: spend
+      description: Amount spent
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: conversions
+      description: Total conversions
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: conversions_value
+      description: Value of conversions
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+  - name: facebook_ads__country_report
+    description: Performance metrics segmented by user country for geographic analysis
+    columns:
+    - name: source_relation
+      description: Source connector identifier
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: date_day
+      description: Date of the performance metrics
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: country_id
+      description: Unique identifier for country
+      meta:
+        semantic_type: identifier
+    - name: country
+      description: Country name where ad was shown
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: account_id
+      description: Facebook Ads account ID
+      meta:
+        semantic_type: identifier
+    - name: account_name
+      description: Display name of the ad account
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: account_business_country_code
+      description: Country code for the business
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: account_timezone
+      description: Timezone of the ad account
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: account_timezone_offset_hours_utc
+      description: UTC offset in hours
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: account_currency
+      description: Currency used for billing
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: account_min_daily_budget
+      description: Minimum daily budget allowed for the account
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: impressions
+      description: Number of impressions in this country
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: clicks
+      description: Number of clicks in this country
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: spend
+      description: Amount spent in this country
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: reach
+      description: Number of unique people reached in this country
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: frequency
+      description: Average number of times each person saw the ad
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: conversions
+      description: Conversions from this country
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+  - name: facebook_ads__region_report
+    description: Performance metrics segmented by state/region for geographic analysis
+    columns:
+    - name: source_relation
+      description: Source connector identifier
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: date_day
+      description: Date of the performance metrics
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: region_id
+      description: Unique identifier for region/state
+      meta:
+        semantic_type: identifier
+    - name: region
+      description: State or region name where ad was shown
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: account_id
+      description: Facebook Ads account ID
+      meta:
+        semantic_type: identifier
+    - name: account_name
+      description: Display name of the ad account
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: account_business_state
+      description: State where the business is located
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: account_business_country_code
+      description: Country code for the business
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: account_timezone
+      description: Timezone of the ad account
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: account_timezone_offset_hours_utc
+      description: UTC offset in hours
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: account_currency
+      description: Currency used for billing
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: account_min_daily_budget
+      description: Minimum daily budget allowed for the account
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: impressions
+      description: Number of impressions in this region
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: clicks
+      description: Number of clicks in this region
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: spend
+      description: Amount spent in this region
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: reach
+      description: Number of unique people reached in this region
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: frequency
+      description: Average number of times each person saw the ad
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: conversions
+      description: Conversions from this region
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+  - name: facebook_ads__url_report
+    description: Performance metrics by destination URL with UTM parameters for attribution
+    columns:
+    - name: source_relation
+      description: Source connector identifier
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: date_day
+      description: Date of the performance metrics
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: account_id
+      description: Facebook Ads account ID
+      meta:
+        semantic_type: identifier
+    - name: account_name
+      description: Display name of the ad account
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: campaign_id
+      description: Unique campaign ID
+      meta:
+        semantic_type: identifier
+    - name: campaign_name
+      description: Campaign name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: ad_set_id
+      description: Unique ad set ID
+      meta:
+        semantic_type: identifier
+    - name: ad_set_name
+      description: Ad set name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: ad_id
+      description: Unique ad ID
+      meta:
+        semantic_type: identifier
+    - name: ad_name
+      description: Ad name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: creative_id
+      description: Unique creative ID (ad design/copy)
+      meta:
+        semantic_type: identifier
+    - name: creative_name
+      description: Creative name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: base_url
+      description: Landing page URL without parameters
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: url_host
+      description: Domain of the landing page
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: url_path
+      description: Path portion of the landing page URL
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: utm_source
+      description: UTM source parameter (typically 'facebook')
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: utm_medium
+      description: UTM medium parameter (typically 'cpc' or 'paid-social')
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: utm_campaign
+      description: UTM campaign parameter for tracking
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: utm_content
+      description: UTM content parameter for A/B testing
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: utm_term
+      description: UTM term parameter (rarely used in Facebook ads)
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: clicks
+      description: Number of clicks to this URL
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: impressions
+      description: Number of impressions
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: spend
+      description: Amount spent
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: conversions
+      description: Conversions from this URL
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: conversions_value
+      description: Value of conversions from this URL
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+  - name: facebook_ads__url_tags
+    description: UTM parameter key-value pairs extracted from ad URLs
+    columns:
+    - name: source_relation
+      description: Source connector identifier
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: _fivetran_id
+      description: Fivetran-generated unique ID
+      meta:
+        semantic_type: identifier
+    - name: creative_id
+      description: Creative ID associated with this URL
+      meta:
+        semantic_type: identifier
+    - name: key
+      description: UTM parameter name (source, medium, campaign, etc.)
+      meta:
+        semantic_type: identifier
+    - name: value
+      description: UTM parameter value
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: type
+      description: Type of URL tag
+      meta:
+        semantic_type: dimension
+        cardinality: low
+  - name: int_facebook_ads__conversions
+    description: Intermediate table with conversions pivoted by action type
+    columns:
+    - name: source_relation
+      description: Source connector identifier
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: ad_id
+      description: Ad ID for the conversion
+      meta:
+        semantic_type: identifier
+    - name: date_day
+      description: Date of the conversion
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: conversions
+      description: Total conversions
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: conversions_value
+      description: Total conversion value
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+  - name: int_facebook_ads__creative_history
+    description: Intermediate table with creative URLs parsed into components
+    columns:
+    - name: source_relation
+      description: Source connector identifier
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: _fivetran_id
+      description: Fivetran-generated unique ID
+      meta:
+        semantic_type: identifier
+    - name: creative_id
+      description: Unique creative ID
+      meta:
+        semantic_type: identifier
+    - name: account_id
+      description: Facebook Ads account ID
+      meta:
+        semantic_type: identifier
+    - name: creative_name
+      description: Creative name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: url
+      description: Full landing page URL
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: base_url
+      description: Landing page URL without parameters
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: url_host
+      description: Domain of the landing page
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: url_path
+      description: Path portion of the landing page URL
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: utm_source
+      description: Parsed UTM source parameter
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: utm_medium
+      description: Parsed UTM medium parameter
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: utm_campaign
+      description: Parsed UTM campaign parameter
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: utm_content
+      description: Parsed UTM content parameter
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: utm_term
+      description: Parsed UTM term parameter
+      meta:
+        semantic_type: dimension
+        cardinality: medium

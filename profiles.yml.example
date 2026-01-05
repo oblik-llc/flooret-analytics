@@ -1,0 +1,22 @@
+florret_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: oauth  # or service-account
+      project: bigcommerce-313718
+      dataset: dbt_dev  # development dataset
+      threads: 4
+      timeout_seconds: 300
+      location: US
+      # For service account auth:
+      # keyfile: /path/to/keyfile.json
+    prod:
+      type: bigquery
+      method: service-account
+      project: bigcommerce-313718
+      dataset: dbt_prod
+      threads: 4
+      timeout_seconds: 300
+      location: US
+      keyfile: /path/to/keyfile.json

@@ -1,0 +1,19 @@
+version: 2
+sources:
+- name: ft_gladly
+  description: 'Gladly customer service platform data tracking support conversations and agent performance. Enables analysis of customer service efficiency, response times, and satisfaction.
+
+    '
+  tables:
+  - name: conversations
+    description: 'Customer support conversations across all channels (email, chat, phone, SMS). Each conversation may contain multiple messages and involve multiple agents. Use for tracking resolution times, conversation volume, and customer satisfaction.
+
+      '
+  - name: messages
+    description: 'Individual messages within conversations from customers or agents. Includes message content, timestamps, sender information, and channel. Join to conversations for full context of customer interactions.
+
+      '
+  - name: agents
+    description: 'Gladly support agents and their attributes. Use for agent performance analysis and workload distribution.
+
+      '

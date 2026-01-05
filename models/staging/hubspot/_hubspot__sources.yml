@@ -1,0 +1,2928 @@
+version: 2
+sources:
+- name: ft_hubspot_hubspot
+  description: 'HubSpot CRM data tracking contacts, companies, deals, and sales engagements. Core system for managing customer relationships, sales pipeline, and marketing automation.
+
+    '
+  tables:
+  - name: hubspot__companies
+    description: Company records with firmographic data and engagement summaries
+    columns:
+    - name: company_id
+      description: Unique identifier for the company record
+      meta:
+        semantic_type: identifier
+    - name: is_company_deleted
+      description: Boolean flag indicating if company record has been deleted
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: _fivetran_synced
+      description: Timestamp when record was last synced by Fivetran
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: company_name
+      description: Business name of the company
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: description
+      description: Company description or notes
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: created_date
+      description: Date when company record was created in HubSpot
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: industry
+      description: Industry classification for the company
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: street_address
+      description: Street address line 1
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: street_address_2
+      description: Street address line 2
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: city
+      description: City location of company
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: state
+      description: State or region
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: country
+      description: Country code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: company_annual_revenue
+      description: Reported annual revenue for the company
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: count_engagement_notes
+      description: Total number of notes logged for this company
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_engagement_tasks
+      description: Total number of tasks created for this company
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_engagement_calls
+      description: Total number of calls logged for this company
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_engagement_meetings
+      description: Total number of meetings scheduled for this company
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_engagement_emails
+      description: Total number of emails sent to this company
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - customer_email
+        - user_email
+    - name: count_engagement_incoming_emails
+      description: Total number of incoming emails from this company
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - customer_email
+        - user_email
+    - name: count_engagement_forwarded_emails
+      description: Total number of forwarded emails related to this company
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - customer_email
+        - user_email
+  - name: hubspot__company_history
+    description: Audit log of all property changes for company records (SCD Type 2)
+    columns:
+    - name: company_id
+      description: Foreign key to company being tracked
+      meta:
+        semantic_type: identifier
+    - name: field_name
+      description: Name of the field that was changed
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: change_source
+      description: System or process that triggered the change
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: change_source_id
+      description: Identifier for the change source
+      meta:
+        semantic_type: identifier
+    - name: valid_from
+      description: Timestamp when this value became effective
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: new_value
+      description: The new value after the change
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: valid_to
+      description: Timestamp when this value was superseded (null for current)
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: id
+      description: Unique identifier for this history record
+      meta:
+        semantic_type: identifier
+        business_terms:
+        - customer
+        - user_id
+  - name: hubspot__contact_history
+    description: Audit log of all property changes for contact records (SCD Type 2)
+    columns:
+    - name: contact_id
+      description: Foreign key to contact being tracked
+      meta:
+        semantic_type: identifier
+    - name: field_name
+      description: Name of the contact property that changed
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: change_source
+      description: System or process that triggered the change
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: change_source_id
+      description: Identifier for the change source
+      meta:
+        semantic_type: identifier
+    - name: valid_from
+      description: Timestamp when this value became effective
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: new_value
+      description: The new value after the change
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: valid_to
+      description: Timestamp when this value was superseded (null for current)
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: id
+      description: Unique identifier for this history record
+      meta:
+        semantic_type: identifier
+        business_terms:
+        - customer
+        - user_id
+  - name: hubspot__contacts
+    description: Individual contact records with demographics and engagement summaries
+    columns:
+    - name: contact_id
+      description: Unique identifier for the contact record
+      meta:
+        semantic_type: identifier
+    - name: is_contact_deleted
+      description: Boolean flag indicating if contact has been deleted
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: calculated_merged_vids
+      description: List of visitor IDs that were merged into this contact
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: merged_object_ids
+      description: Object IDs that were merged into this contact
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: email
+      description: Primary email address for the contact
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: contact_company
+      description: Company name associated with contact
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: first_name
+      description: Contact's first name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: last_name
+      description: Contact's last name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: created_date
+      description: Date when contact was created in HubSpot
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: job_title
+      description: Contact's job title or role
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: company_annual_revenue
+      description: Annual revenue of contact's associated company
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: _fivetran_synced
+      description: Timestamp when record was last synced by Fivetran
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: count_engagement_notes
+      description: Total number of notes logged for this contact
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_engagement_tasks
+      description: Total number of tasks created for this contact
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_engagement_calls
+      description: Total number of calls logged with this contact
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_engagement_meetings
+      description: Total number of meetings scheduled with this contact
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_engagement_emails
+      description: Total number of emails sent to this contact
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - customer_email
+        - user_email
+    - name: count_engagement_incoming_emails
+      description: Total number of incoming emails from this contact
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - customer_email
+        - user_email
+    - name: count_engagement_forwarded_emails
+      description: Total number of forwarded emails related to this contact
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - customer_email
+        - user_email
+  - name: hubspot__deal_history
+    description: Audit log of all property changes for deal records (SCD Type 2)
+    columns:
+    - name: deal_id
+      description: Foreign key to deal being tracked
+      meta:
+        semantic_type: identifier
+    - name: field_name
+      description: Name of the deal property that changed
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: change_source
+      description: System or process that triggered the change
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: change_source_id
+      description: Identifier for the change source
+      meta:
+        semantic_type: identifier
+    - name: valid_from
+      description: Timestamp when this value became effective
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: new_value
+      description: The new value after the change
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: valid_to
+      description: Timestamp when this value was superseded (null for current)
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: id
+      description: Unique identifier for this history record
+      meta:
+        semantic_type: identifier
+        business_terms:
+        - customer
+        - user_id
+  - name: hubspot__deal_stages
+    description: 'Deal pipeline progression tracking with stage entry/exit timestamps. Enables velocity analysis and pipeline conversion rates.
+
+      '
+    columns:
+    - name: deal_stage_id
+      description: Unique identifier for this stage instance
+      meta:
+        semantic_type: identifier
+    - name: deal_id
+      description: Foreign key to the deal
+      meta:
+        semantic_type: identifier
+    - name: deal_name
+      description: Name of the deal
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: date_stage_entered
+      description: Timestamp when deal entered this stage
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: date_stage_exited
+      description: Timestamp when deal exited this stage (null if current)
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: is_stage_active
+      description: Boolean indicating if deal is currently in this stage
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: pipeline_stage_id
+      description: Identifier for the pipeline stage
+      meta:
+        semantic_type: identifier
+    - name: pipeline_stage_label
+      description: Display name for the pipeline stage
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: pipeline_id
+      description: Identifier for the deal pipeline
+      meta:
+        semantic_type: identifier
+    - name: pipeline_label
+      description: Display name for the pipeline
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: source
+      description: Source of the stage change
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: source_id
+      description: Identifier for the change source
+      meta:
+        semantic_type: identifier
+    - name: is_pipeline_stage_active
+      description: Boolean indicating if the pipeline stage is active
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: is_pipeline_active
+      description: Boolean indicating if the pipeline is active
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: is_pipeline_stage_closed
+      description: Boolean indicating if this is a closed/won stage
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: pipeline_stage_display_order
+      description: Numeric order of this stage in the pipeline
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: pipeline_display_order
+      description: Numeric order of this pipeline
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: pipeline_stage_probability
+      description: Probability of deal closing at this stage (0-1)
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: is_deal_pipeline_deleted
+      description: Boolean indicating if the pipeline has been deleted
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: is_deal_pipeline_stage_deleted
+      description: Boolean indicating if this stage has been deleted
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: is_deal_deleted
+      description: Boolean indicating if the deal has been deleted
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: deal_pipeline_stage_created_at
+      description: Timestamp when this pipeline stage was created
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: deal_pipeline_stage_updated_at
+      description: Timestamp when this pipeline stage was last updated
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+  - name: hubspot__deals
+    description: Sales opportunities with amounts, pipeline stages, and owner information
+    columns:
+    - name: deal_name
+      description: Name or title of the deal
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: closed_date
+      description: Date when deal was closed (won or lost)
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: created_date
+      description: Date when deal was created in HubSpot
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: is_deal_deleted
+      description: Boolean flag indicating if deal has been deleted
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: _fivetran_synced
+      description: Timestamp when record was last synced by Fivetran
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: deal_id
+      description: Unique identifier for the deal
+      meta:
+        semantic_type: identifier
+    - name: deal_pipeline_id
+      description: ID of the pipeline this deal belongs to
+      meta:
+        semantic_type: identifier
+    - name: deal_pipeline_stage_id
+      description: ID of the current pipeline stage
+      meta:
+        semantic_type: identifier
+    - name: owner_id
+      description: ID of the HubSpot user who owns this deal
+      meta:
+        semantic_type: identifier
+    - name: portal_id
+      description: HubSpot portal (account) ID
+      meta:
+        semantic_type: identifier
+    - name: description
+      description: Deal description or notes
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: amount
+      description: Deal value in USD
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - discounts
+        - savings
+        - coupon_value
+    - name: is_deal_pipeline_deleted
+      description: Boolean indicating if the pipeline has been deleted
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: pipeline_label
+      description: Display name for the deal pipeline
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: is_pipeline_active
+      description: Boolean indicating if the pipeline is active
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: is_deal_pipeline_stage_deleted
+      description: Boolean indicating if the current stage has been deleted
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: deal_pipeline_created_at
+      description: Timestamp when the pipeline was created
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: deal_pipeline_updated_at
+      description: Timestamp when the pipeline was last updated
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: pipeline_stage_label
+      description: Display name for the current pipeline stage
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: owner_active_user_id
+      description: Active user ID of the deal owner
+      meta:
+        semantic_type: identifier
+    - name: owner_email_address
+      description: Email address of the deal owner
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: owner_full_name
+      description: Full name of the deal owner
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: count_engagement_notes
+      description: Total number of notes logged for this deal
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_engagement_tasks
+      description: Total number of tasks created for this deal
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_engagement_calls
+      description: Total number of calls logged for this deal
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_engagement_meetings
+      description: Total number of meetings scheduled for this deal
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_engagement_emails
+      description: Total number of emails sent related to this deal
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - customer_email
+        - user_email
+    - name: count_engagement_incoming_emails
+      description: Total number of incoming emails related to this deal
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - customer_email
+        - user_email
+    - name: count_engagement_forwarded_emails
+      description: Total number of forwarded emails related to this deal
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - customer_email
+        - user_email
+  - name: hubspot__engagement_calls
+    description: Phone call activity logged in HubSpot with duration, direction, and disposition
+    columns:
+    - name: _fivetran_synced
+      description: Timestamp when record was last synced by Fivetran
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: engagement_id
+      description: Unique identifier for this engagement
+      meta:
+        semantic_type: identifier
+    - name: engagement_type
+      description: Type of engagement (CALL for this table)
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: team_id
+      description: ID of the team associated with this call
+      meta:
+        semantic_type: identifier
+    - name: call_status
+      description: Status of the call (completed, busy, no answer, etc.)
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: body_preview_is_truncated
+      description: Boolean indicating if call notes are truncated
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: body_preview_html
+      description: HTML preview of call notes
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: call_body
+      description: Full text notes from the call
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: all_owner_ids
+      description: List of all user IDs associated with this call
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: call_direction
+      description: Direction of call (inbound or outbound)
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: body_preview
+      description: Plain text preview of call notes
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: call_title
+      description: Title or subject of the call
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: call_disposition
+      description: Call outcome (connected, left voicemail, etc.)
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: call_has_transcript
+      description: Boolean indicating if call has a transcript
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: call_to_number
+      description: Phone number that was called
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: call_duration
+      description: Duration of call in milliseconds
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: call_callee_object_id
+      description: ID of the object (contact/company) that was called
+      meta:
+        semantic_type: identifier
+    - name: calls_service_call_id
+      description: ID from external calling service
+      meta:
+        semantic_type: identifier
+    - name: call_recording_url
+      description: URL to call recording if available
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: call_callee_object_type
+      description: Type of object called (CONTACT or COMPANY)
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: call_from_number
+      description: Phone number the call originated from
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: call_transcript_audio_num_channels
+      description: Number of audio channels in transcript
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: call_external_id
+      description: External system ID for the call
+      meta:
+        semantic_type: identifier
+    - name: call_external_account_id
+      description: External account ID for the calling service
+      meta:
+        semantic_type: identifier
+    - name: call_source
+      description: Source system for the call (e.g., Aircall, RingCentral)
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: call_transcript_tracked_terms
+      description: Key terms tracked in call transcript
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: call_from_number_nickname
+      description: Display name for the from number
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: call_phone_number_source
+      description: Source of the phone number
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: call_unified_phone_number_id
+      description: Unified ID for the phone number
+      meta:
+        semantic_type: identifier
+    - name: call_location
+      description: Geographic location of the call
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: call_to_number_nickname
+      description: Display name for the to number
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: call_has_voicemail
+      description: Boolean indicating if voicemail was left
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: call_routing_strategy_type
+      description: Type of routing strategy used
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: call_deal_stage_during_call
+      description: Deal stage at the time of the call
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: call_summary
+      description: AI-generated or manual summary of the call
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: call_app_id
+      description: ID of the calling app used
+      meta:
+        semantic_type: identifier
+    - name: at_mentioned_owner_ids
+      description: User IDs mentioned in call notes
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: connected_count
+      description: Number of times call was connected
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: updated_by_user_id
+      description: ID of user who last updated this record
+      meta:
+        semantic_type: identifier
+    - name: created_by_user_id
+      description: ID of user who created this record
+      meta:
+        semantic_type: identifier
+    - name: voicemail_count
+      description: Number of voicemails left
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - customer_email
+        - user_email
+    - name: engagement_source
+      description: Source that created the engagement
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: property_hubspot_owner_assigneddate
+      description: Date when owner was assigned
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: object_source_id
+      description: ID of the source that created the associated object
+      meta:
+        semantic_type: identifier
+    - name: lastmodifieddate
+      description: Date when record was last modified
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: created_by
+      description: Timestamp when record was created
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: object_source_label
+      description: Label for the object source
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: object_id
+      description: ID of the associated object
+      meta:
+        semantic_type: identifier
+    - name: engagements_last_contacted
+      description: Timestamp of last contact with this engagement
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: user_ids_of_all_owners
+      description: List of all owner user IDs
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: modified_by
+      description: Timestamp when record was last modified
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: object_source
+      description: Source system for the associated object
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: object_source_user_id
+      description: User ID from the source system
+      meta:
+        semantic_type: identifier
+    - name: engagement_source_id
+      description: ID of the source that created the engagement
+      meta:
+        semantic_type: identifier
+    - name: unique_id
+      description: Unique identifier for the record
+      meta:
+        semantic_type: identifier
+    - name: object_source_detail_1
+      description: Additional detail about the object source
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: contact_ids
+      description: List of contact IDs associated with this call
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: deal_ids
+      description: List of deal IDs associated with this call
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: company_ids
+      description: List of company IDs associated with this call
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: is_active
+      description: Boolean indicating if engagement is active
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: created_timestamp
+      description: Timestamp when engagement was created
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: occurred_timestamp
+      description: Timestamp when the call actually occurred
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: owner_id
+      description: ID of the user who owns this engagement
+      meta:
+        semantic_type: identifier
+  - name: hubspot__engagement_emails
+    description: Email activity tracked in HubSpot with open/click tracking and threading
+    columns:
+    - name: _fivetran_synced
+      description: Timestamp when record was last synced by Fivetran
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: engagement_type
+      description: Type of engagement (EMAIL for this table)
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: engagement_id
+      description: Unique identifier for this engagement
+      meta:
+        semantic_type: identifier
+    - name: team_id
+      description: ID of the team associated with this email
+      meta:
+        semantic_type: identifier
+    - name: email_attached_video_opened
+      description: Boolean indicating if attached video was opened
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: email_details
+      description: Detailed email metadata
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: email_message_id
+      description: Message ID from email header
+      meta:
+        semantic_type: identifier
+        business_terms:
+        - customer_email
+        - user_email
+    - name: email_direction
+      description: Direction of email (sent or received)
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: email_associated_contact_id
+      description: ID of the primary contact for this email
+      meta:
+        semantic_type: identifier
+        business_terms:
+        - customer_email
+        - user_email
+    - name: email_html
+      description: HTML content of the email
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: body_preview_html
+      description: HTML preview of email body
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: email_from_lastname
+      description: Last name of sender
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: email_from_raw
+      description: Raw from email address
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: created_by_user_id
+      description: ID of user who created this record
+      meta:
+        semantic_type: identifier
+    - name: body_preview
+      description: Plain text preview of email body
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: body_preview_is_truncated
+      description: Boolean indicating if preview is truncated
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: email_logged_from
+      description: Source where email was logged from
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: created_by
+      description: Timestamp when record was created
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: email_from_email
+      description: Email address of sender
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: email_media_processing_status
+      description: Status of media processing in email
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: all_owner_ids
+      description: List of all user IDs associated with this email
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: direction_and_unique_id
+      description: Combined direction and unique ID
+      meta:
+        semantic_type: identifier
+    - name: email_open_count
+      description: Number of times email was opened
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - customer_email
+        - user_email
+    - name: email_click_rate
+      description: Percentage of recipients who clicked
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: percentage
+        business_terms:
+        - customer_email
+        - user_email
+    - name: email_from_firstname
+      description: First name of sender
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: email_attached_video_watched
+      description: Boolean indicating if attached video was watched
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: email_click_count
+      description: Number of clicks in email
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - customer_email
+        - user_email
+    - name: email_cc_email
+      description: CC email addresses
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: email_cc_lastname
+      description: Last name of CC recipient
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: email_cc_firstname
+      description: First name of CC recipient
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: email_cc_raw
+      description: Raw CC email addresses
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: attachment_ids
+      description: List of attachment IDs
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: email_encoded_email_associations_request
+      description: Encoded associations request
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: email_bounce_error_detail_message
+      description: Bounce error message if email bounced
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: email_bounce_error_detail_status_code
+      description: HTTP status code for bounce error
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        business_terms:
+        - customer_email
+        - user_email
+    - name: email_facsimile_send_id
+      description: Facsimile send ID
+      meta:
+        semantic_type: identifier
+        business_terms:
+        - customer_email
+        - user_email
+    - name: app_id
+      description: ID of the app that sent the email
+      meta:
+        semantic_type: identifier
+    - name: email_error_message
+      description: Error message if email failed
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: email_member_of_forwarded_subthread
+      description: Boolean indicating if part of forwarded thread
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: email_post_send_status
+      description: Status after sending email
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: email_to_raw
+      description: Raw to email addresses
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: email_tracker_key
+      description: Tracking key for email analytics
+      meta:
+        semantic_type: identifier
+        business_terms:
+        - customer_email
+        - user_email
+    - name: email_open_rate
+      description: Percentage of recipients who opened
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: percentage
+        business_terms:
+        - customer_email
+        - user_email
+    - name: email_sent_count
+      description: Number of times email was sent
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - customer_email
+        - user_email
+    - name: email_to_email
+      description: To email address
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: email_sender_email
+      description: Sender email address
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: engagement_source
+      description: Source that created the engagement
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: email_reply_rate
+      description: Percentage of recipients who replied
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: percentage
+        business_terms:
+        - customer_email
+        - user_email
+    - name: lastmodifieddate
+      description: Date when record was last modified
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: object_source_label
+      description: Label for the object source
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: email_status
+      description: Delivery status of email
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: email_subject
+      description: Subject line of email
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: object_id
+      description: ID of the associated object
+      meta:
+        semantic_type: identifier
+    - name: email_thread_id
+      description: Thread ID for email conversations
+      meta:
+        semantic_type: identifier
+        business_terms:
+        - customer_email
+        - user_email
+    - name: engagements_last_contacted
+      description: Timestamp of last contact with this engagement
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: modified_by
+      description: Timestamp when record was last modified
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: owner_ids_from
+      description: Owner IDs from sender
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: email_text
+      description: Plain text content of email
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: object_source
+      description: Source system for the associated object
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: object_source_user_id
+      description: User ID from the source system
+      meta:
+        semantic_type: identifier
+    - name: object_source_id
+      description: ID of the source that created the associated object
+      meta:
+        semantic_type: identifier
+    - name: email_to_lastname
+      description: Last name of recipient
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: email_to_firstname
+      description: First name of recipient
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: email_reply_count
+      description: Number of replies to email
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - customer_email
+        - user_email
+    - name: owner_ids_to
+      description: Owner IDs of recipients
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: owner_ids_cc
+      description: Owner IDs of CC recipients
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: email_sent_via
+      description: Method email was sent via (API, extension, etc.)
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: incoming_email_is_out_of_office
+      description: Boolean indicating if incoming email is out-of-office auto-reply
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: gdpr_deleted
+      description: Boolean indicating if email was deleted for GDPR compliance
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: not_tracking_opens_or_clicks
+      description: Boolean indicating if tracking is disabled
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: unique_id
+      description: Unique identifier for the record
+      meta:
+        semantic_type: identifier
+    - name: template_id
+      description: ID of email template used
+      meta:
+        semantic_type: identifier
+    - name: unique_tracker_key
+      description: Unique tracking key for analytics
+      meta:
+        semantic_type: identifier
+    - name: updated_by_user_id
+      description: ID of user who last updated this record
+      meta:
+        semantic_type: identifier
+    - name: scs_audit_id
+      description: Sales content search audit ID
+      meta:
+        semantic_type: identifier
+    - name: user_ids_of_all_owners
+      description: List of all owner user IDs
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: scs_association_status
+      description: Sales content search association status
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: property_hubspot_owner_assigneddate
+      description: Date when owner was assigned
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: sequence_id
+      description: ID of sales sequence if part of automated sequence
+      meta:
+        semantic_type: identifier
+    - name: contact_ids
+      description: List of contact IDs associated with this email
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: deal_ids
+      description: List of deal IDs associated with this email
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: company_ids
+      description: List of company IDs associated with this email
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: is_active
+      description: Boolean indicating if engagement is active
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: created_timestamp
+      description: Timestamp when engagement was created
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: occurred_timestamp
+      description: Timestamp when the email was sent/received
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: owner_id
+      description: ID of the user who owns this engagement
+      meta:
+        semantic_type: identifier
+  - name: hubspot__engagement_meetings
+    description: Meeting activity scheduled in HubSpot with attendees and outcomes
+    columns:
+    - name: _fivetran_synced
+      description: Timestamp when record was last synced by Fivetran
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: engagement_type
+      description: Type of engagement (MEETING for this table)
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: engagement_id
+      description: Unique identifier for this engagement
+      meta:
+        semantic_type: identifier
+    - name: team_id
+      description: ID of the team associated with this meeting
+      meta:
+        semantic_type: identifier
+    - name: contact_first_outreach_date
+      description: Date of first outreach to contact
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: meeting_external_url
+      description: URL to external meeting (Zoom, Google Meet, etc.)
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: created_by_user_id
+      description: ID of user who created this record
+      meta:
+        semantic_type: identifier
+    - name: engagement_source_id
+      description: ID of the source that created the engagement
+      meta:
+        semantic_type: identifier
+    - name: engagement_source
+      description: Source that created the engagement
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: meeting_body
+      description: Meeting notes or description
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: meeting_end_time
+      description: Scheduled end time of meeting
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: meeting_source
+      description: Source where meeting was created
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: follow_up_tasks_remaining
+      description: Number of follow-up tasks still pending
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: include_description_in_reminder
+      description: Boolean indicating if description should be in reminder
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: lastmodifieddate
+      description: Date when record was last modified
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: meeting_outcome
+      description: Outcome of the meeting (scheduled, completed, no-show, etc.)
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: body_preview_is_truncated
+      description: Boolean indicating if preview is truncated
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: meeting_location_type
+      description: Type of meeting location (in-person, video, phone)
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: created_by
+      description: Timestamp when record was created
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: engagements_last_contacted
+      description: Timestamp of last contact with this engagement
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: meeting_start_time
+      description: Scheduled start time of meeting
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: all_owner_ids
+      description: List of all user IDs associated with this meeting
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: meeting_source_id
+      description: ID of the source where meeting was created
+      meta:
+        semantic_type: identifier
+    - name: i_cal_uid
+      description: iCalendar UID for calendar sync
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: body_preview_html
+      description: HTML preview of meeting notes
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: meeting_location
+      description: Location description or address for meeting
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: body_preview
+      description: Plain text preview of meeting notes
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: attendee_owner_ids
+      description: List of owner IDs who attended
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: has_call_with_transcript
+      description: Boolean indicating if meeting has call transcript
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: associated_call_source
+      description: Source of associated call if applicable
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: meeting_pre_meeting_prospect_reminders
+      description: Settings for pre-meeting reminders to prospects
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: created_by_scheduling_page
+      description: Timestamp when created via scheduling page
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: meeting_calendar_event_hash
+      description: Hash of calendar event for sync tracking
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: all_assigned_business_unit_ids
+      description: List of assigned business unit IDs
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: meeting_change_id
+      description: ID for tracking meeting changes
+      meta:
+        semantic_type: identifier
+    - name: meeting_created_from_link_id
+      description: ID of scheduling link used to create meeting
+      meta:
+        semantic_type: identifier
+    - name: unique_id
+      description: Unique identifier for the record
+      meta:
+        semantic_type: identifier
+    - name: timezone
+      description: Timezone for the meeting
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: updated_by_user_id
+      description: ID of user who last updated this record
+      meta:
+        semantic_type: identifier
+    - name: outcome_rescheduled_count
+      description: Number of times meeting was rescheduled
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: property_hubspot_owner_assigneddate
+      description: Date when owner was assigned
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: time_to_book_meeting_from_first_contact
+      description: Time in seconds from first contact to meeting booked
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: object_source_id
+      description: ID of the source that created the associated object
+      meta:
+        semantic_type: identifier
+    - name: meeting_title
+      description: Title or subject of the meeting
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: outcome_canceled_count
+      description: Number of times meeting was canceled
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: outcome_completed_count
+      description: Number of times meeting was completed
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: object_source_label
+      description: Label for the object source
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: outcome_scheduled_count
+      description: Number of times meeting was scheduled
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: object_id
+      description: ID of the associated object
+      meta:
+        semantic_type: identifier
+    - name: outcome_no_show_count
+      description: Number of no-shows for this meeting
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: user_ids_of_all_owners
+      description: List of all owner user IDs
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: modified_by
+      description: Timestamp when record was last modified
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: object_source
+      description: Source system for the associated object
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: object_source_user_id
+      description: User ID from the source system
+      meta:
+        semantic_type: identifier
+    - name: video_conference_url
+      description: URL for video conference
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: video_conference_platform
+      description: Platform for video conference (Zoom, Google Meet, etc.)
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: contact_ids
+      description: List of contact IDs associated with this meeting
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: deal_ids
+      description: List of deal IDs associated with this meeting
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: company_ids
+      description: List of company IDs associated with this meeting
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: is_active
+      description: Boolean indicating if engagement is active
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: created_timestamp
+      description: Timestamp when engagement was created
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: occurred_timestamp
+      description: Timestamp when the meeting occurred
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: owner_id
+      description: ID of the user who owns this engagement
+      meta:
+        semantic_type: identifier
+  - name: hubspot__engagement_notes
+    description: Notes logged in HubSpot for contacts, companies, and deals
+    columns:
+    - name: _fivetran_synced
+      description: Timestamp when record was last synced by Fivetran
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: note
+      description: Full text content of the note
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: engagement_type
+      description: Type of engagement (NOTE for this table)
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: engagement_id
+      description: Unique identifier for this engagement
+      meta:
+        semantic_type: identifier
+    - name: team_id
+      description: ID of the team associated with this note
+      meta:
+        semantic_type: identifier
+    - name: body_preview_html
+      description: HTML preview of note content
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: updated_by_user_id
+      description: ID of user who last updated this record
+      meta:
+        semantic_type: identifier
+    - name: created_by_user_id
+      description: ID of user who created this record
+      meta:
+        semantic_type: identifier
+    - name: engagement_source
+      description: Source that created the engagement
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: body_preview
+      description: Plain text preview of note content
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: property_hubspot_owner_assigneddate
+      description: Date when owner was assigned
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: object_source_id
+      description: ID of the source that created the associated object
+      meta:
+        semantic_type: identifier
+    - name: lastmodifieddate
+      description: Date when record was last modified
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: body_preview_is_truncated
+      description: Boolean indicating if preview is truncated
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: note_body
+      description: Full body content of the note
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: created_by
+      description: Timestamp when record was created
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: object_source_label
+      description: Label for the object source
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: object_id
+      description: ID of the associated object
+      meta:
+        semantic_type: identifier
+    - name: user_ids_of_all_owners
+      description: List of all owner user IDs
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: all_owner_ids
+      description: List of all user IDs associated with this note
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: modified_by
+      description: Timestamp when record was last modified
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: object_source
+      description: Source system for the associated object
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: object_source_user_id
+      description: User ID from the source system
+      meta:
+        semantic_type: identifier
+    - name: attachment_ids
+      description: List of attachment IDs for this note
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: engagement_source_id
+      description: ID of the source that created the engagement
+      meta:
+        semantic_type: identifier
+    - name: at_mentioned_owner_ids
+      description: User IDs mentioned in the note
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: contact_ids
+      description: List of contact IDs associated with this note
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: deal_ids
+      description: List of deal IDs associated with this note
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: company_ids
+      description: List of company IDs associated with this note
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: is_active
+      description: Boolean indicating if engagement is active
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: created_timestamp
+      description: Timestamp when engagement was created
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: occurred_timestamp
+      description: Timestamp when the note was taken
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: owner_id
+      description: ID of the user who owns this engagement
+      meta:
+        semantic_type: identifier
+  - name: hubspot__engagement_tasks
+    description: Tasks created in HubSpot with due dates, completion status, and assignments
+    columns:
+    - name: _fivetran_synced
+      description: Timestamp when record was last synced by Fivetran
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: engagement_id
+      description: Unique identifier for this engagement
+      meta:
+        semantic_type: identifier
+    - name: engagement_type
+      description: Type of engagement (TASK for this table)
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: team_id
+      description: ID of the team associated with this task
+      meta:
+        semantic_type: identifier
+    - name: task_body
+      description: Description or details of the task
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: task_is_completed_email
+      description: Boolean indicating if task was completed via email
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        business_terms:
+        - customer_email
+        - user_email
+    - name: task_completion_date
+      description: Date when task was completed
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: task_assigned_by_user_id
+      description: ID of user who assigned the task
+      meta:
+        semantic_type: identifier
+    - name: task_is_all_day
+      description: Boolean indicating if task is all-day
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: task_for_object_type
+      description: Type of object task is for (CONTACT, COMPANY, DEAL)
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: task_priority
+      description: Priority level of task (HIGH, MEDIUM, LOW)
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: task_is_completed_call
+      description: Boolean indicating if task was completed via call
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: task_is_sub_task
+      description: Boolean indicating if this is a subtask
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: task_is_archived
+      description: Boolean indicating if task is archived
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: task_completion_count
+      description: Number of times task was completed
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: task_missed_due_date
+      description: Date when due date was missed (if applicable)
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: task_missed_due_date_count
+      description: Number of times due date was missed
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: task_is_overdue
+      description: Boolean indicating if task is currently overdue
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: task_family
+      description: Family or category of task
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: task_status
+      description: Current status of task (NOT_STARTED, IN_PROGRESS, COMPLETED)
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: task_is_completed_sequence
+      description: Boolean indicating if task was completed via sequence
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: task_last_contact_outreach
+      description: Timestamp of last contact outreach for this task
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: task_is_past_due_date
+      description: Boolean indicating if task is past due date
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: task_is_completed
+      description: Boolean indicating if task is completed
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: start_date_with_fallback
+      description: Start date with fallback logic
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: task_is_completed_linked_in
+      description: Boolean indicating if task was completed via LinkedIn
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: task_relative_reminders
+      description: Relative reminder settings for task
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: task_reminders
+      description: Number of reminders set
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: task_send_default_reminder
+      description: Boolean indicating if default reminder should be sent
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: queue_membership_ids
+      description: IDs of queues this task belongs to
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: task_last_sales_activity_timestamp
+      description: Timestamp of last sales activity
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: task_contact_timezone
+      description: Timezone of associated contact
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: task_repeat_interval
+      description: Interval for repeating tasks
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: repeat_status
+      description: Status of task repeat (ACTIVE, INACTIVE)
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: task_sequence_step_enrollment_contact_id
+      description: Contact ID for sequence step enrollment
+      meta:
+        semantic_type: identifier
+    - name: task_sequence_step_order
+      description: Order of this task in sequence
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: task_sequence_step_enrollment_id
+      description: ID of sequence step enrollment
+      meta:
+        semantic_type: identifier
+    - name: task_sequence_enrollment_active
+      description: Boolean indicating if sequence enrollment is active
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: task_type
+      description: Type of task (EMAIL, CALL, TODO, etc.)
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: task_subject
+      description: Subject or title of the task
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: contact_ids
+      description: List of contact IDs associated with this task
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: deal_ids
+      description: List of deal IDs associated with this task
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: company_ids
+      description: List of company IDs associated with this task
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: is_active
+      description: Boolean indicating if engagement is active
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: created_timestamp
+      description: Timestamp when engagement was created
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: occurred_timestamp
+      description: Timestamp when the task was completed or occurred
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: owner_id
+      description: ID of the user who owns this engagement
+      meta:
+        semantic_type: identifier
+  - name: hubspot__engagements
+    description: Unified view of all engagement types (calls, emails, meetings, notes, tasks)
+    columns:
+    - name: contact_ids
+      description: List of contact IDs associated with this engagement
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: deal_ids
+      description: List of deal IDs associated with this engagement
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: company_ids
+      description: List of company IDs associated with this engagement
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: _fivetran_synced
+      description: Timestamp when record was last synced by Fivetran
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: engagement_id
+      description: Unique identifier for this engagement
+      meta:
+        semantic_type: identifier
+    - name: created_timestamp
+      description: Timestamp when engagement was created
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: owner_id
+      description: ID of the user who owns this engagement
+      meta:
+        semantic_type: identifier
+    - name: occurred_timestamp
+      description: Timestamp when the engagement actually occurred
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: portal_id
+      description: HubSpot portal (account) ID
+      meta:
+        semantic_type: identifier
+    - name: engagement_type
+      description: Type of engagement (CALL, EMAIL, MEETING, NOTE, TASK)
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: is_active
+      description: Boolean indicating if engagement is active
+      meta:
+        semantic_type: dimension
+        cardinality: low
+  - name: int_hubspot__contact_merge_adjust
+    description: Intermediate table handling contact merge adjustments and deduplication
+    columns:
+    - name: contact_id
+      description: Unique identifier for the contact record
+      meta:
+        semantic_type: identifier
+    - name: is_contact_deleted
+      description: Boolean flag indicating if contact has been deleted
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: calculated_merged_vids
+      description: List of visitor IDs that were merged into this contact
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: merged_object_ids
+      description: Object IDs that were merged into this contact
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: email
+      description: Primary email address for the contact
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: contact_company
+      description: Company name associated with contact
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: first_name
+      description: Contact's first name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: last_name
+      description: Contact's last name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: created_date
+      description: Date when contact was created in HubSpot
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: job_title
+      description: Contact's job title or role
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: company_annual_revenue
+      description: Annual revenue of contact's associated company
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: _fivetran_synced
+      description: Timestamp when record was last synced by Fivetran
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+  - name: int_hubspot__deals_enhanced
+    description: Intermediate table with deals enhanced with pipeline and owner information
+    columns:
+    - name: deal_name
+      description: Name or title of the deal
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: closed_date
+      description: Date when deal was closed (won or lost)
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: created_date
+      description: Date when deal was created in HubSpot
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: is_deal_deleted
+      description: Boolean flag indicating if deal has been deleted
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: _fivetran_synced
+      description: Timestamp when record was last synced by Fivetran
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: deal_id
+      description: Unique identifier for the deal
+      meta:
+        semantic_type: identifier
+    - name: deal_pipeline_id
+      description: ID of the pipeline this deal belongs to
+      meta:
+        semantic_type: identifier
+    - name: deal_pipeline_stage_id
+      description: ID of the current pipeline stage
+      meta:
+        semantic_type: identifier
+    - name: owner_id
+      description: ID of the HubSpot user who owns this deal
+      meta:
+        semantic_type: identifier
+    - name: portal_id
+      description: HubSpot portal (account) ID
+      meta:
+        semantic_type: identifier
+    - name: description
+      description: Deal description or notes
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: amount
+      description: Deal value in USD
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - discounts
+        - savings
+        - coupon_value
+    - name: is_deal_pipeline_deleted
+      description: Boolean indicating if the pipeline has been deleted
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: pipeline_label
+      description: Display name for the deal pipeline
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: is_pipeline_active
+      description: Boolean indicating if the pipeline is active
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: is_deal_pipeline_stage_deleted
+      description: Boolean indicating if the current stage has been deleted
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: deal_pipeline_created_at
+      description: Timestamp when the pipeline was created
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: deal_pipeline_updated_at
+      description: Timestamp when the pipeline was last updated
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: pipeline_stage_label
+      description: Display name for the current pipeline stage
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: owner_active_user_id
+      description: Active user ID of the deal owner
+      meta:
+        semantic_type: identifier
+    - name: owner_email_address
+      description: Email address of the deal owner
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: owner_full_name
+      description: Full name of the deal owner
+      meta:
+        semantic_type: dimension
+        cardinality: high
+  - name: int_hubspot__owners_enhanced
+    description: Intermediate table with HubSpot user/owner information
+    columns:
+    - name: owner_id
+      description: Unique identifier for the owner
+      meta:
+        semantic_type: identifier
+    - name: owner_active_user_id
+      description: Active user ID for the owner
+      meta:
+        semantic_type: identifier
+    - name: owner_email_address
+      description: Email address of the owner
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: owner_full_name
+      description: Full name of the owner
+      meta:
+        semantic_type: dimension
+        cardinality: high

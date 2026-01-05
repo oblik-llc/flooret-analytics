@@ -1,0 +1,1945 @@
+version: 2
+sources:
+- name: ft_klaviyo_klaviyo
+  description: 'Klaviyo email marketing and customer engagement data synced via Fivetran.
+
+
+    This source contains campaign performance, automated flow metrics, customer profiles,
+
+    and granular event tracking for email/SMS marketing activities. Critical for
+
+    measuring email ROI, customer engagement, and attribution for Florret''s sample
+
+    order nurture campaigns.
+
+
+    **Join to Shopify**: Use person_email (Klaviyo) = LOWER(email) (Shopify) for
+
+    customer-level email attribution analysis.
+
+    '
+  tables:
+  - name: klaviyo__campaigns
+    description: 'One-time email campaign performance metrics (newsletters, promotions, announcements).
+
+      Each row represents a campaign send with aggregated engagement and revenue metrics.
+
+
+      **Use for**: Campaign ROI analysis, A/B testing subject lines, send time optimization,
+
+      email-attributed revenue tracking.
+
+
+      **Key metrics**: Open/click rates, revenue attribution, recipient counts
+
+      **Grain**: One row per campaign (campaign_id)
+
+      '
+    columns:
+    - name: campaign_id
+      description: 'Primary key. Unique identifier for each Klaviyo email campaign.
+
+        Use to join with klaviyo__events.campaign_id for event-level drill-down.
+
+        '
+      meta:
+        semantic_type: identifier
+        is_primary_key: true
+    - name: campaign_name
+      description: 'Human-readable campaign name set in Klaviyo (e.g., "June Sample Sale",
+
+        "Welcome Email Series - Email 1"). Critical for reporting and campaign grouping.
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: subject
+      description: 'Email subject line shown to recipients. Use for A/B testing analysis to
+
+        identify high-performing subject line patterns.
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        business_terms:
+        - email_subject
+        - subject_line
+    - name: campaign_type
+      description: 'Type of campaign (e.g., "regular", "a/b test", "plain_text"). Indicates whether
+
+        this was a standard send or part of an A/B test experiment.
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: low
+        expected_values:
+        - regular
+        - a/b test
+        - plain_text
+    - name: status
+      description: 'Current campaign status (e.g., "sent", "scheduled", "draft", "canceled").
+
+        Filter to status = ''sent'' for performance analysis of live campaigns.
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: low
+        expected_values:
+        - sent
+        - scheduled
+        - draft
+        - canceled
+    - name: sent_at
+      description: 'Timestamp when the campaign was actually sent to recipients (America/Los_Angeles timezone).
+
+        Use as the canonical send time for time-based campaign analysis.
+
+        '
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+        is_event_time: true
+    - name: scheduled_at
+      description: 'Originally scheduled send time (may differ from sent_at if manually sent or delayed).
+
+        '
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: scheduled_to_send_at
+      description: 'Alternative scheduled timestamp field (Klaviyo legacy field).
+
+        '
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: created_at
+      description: Campaign creation timestamp in Klaviyo.
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: updated_at
+      description: Last modification timestamp for campaign settings.
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: from_email
+      description: 'Sender email address shown to recipients (e.g., "hello@florret.com").
+
+        Use to analyze sender identity impact on engagement.
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: low
+        business_terms:
+        - sender_email
+        - from_address
+    - name: from_name
+      description: 'Sender display name (e.g., "Florret Team", "Sarah from Florret").
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: low
+        business_terms:
+        - sender_name
+    - name: email_template_id
+      description: 'Identifier for the email template used. Join to template tables if analyzing
+
+        template performance (though template content not stored in this dataset).
+
+        '
+      meta:
+        semantic_type: identifier
+    - name: is_archived
+      description: 'Boolean flag indicating if campaign has been archived in Klaviyo.
+
+        Filter is_archived = false for active campaign analysis.
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: status_id
+      description: Internal Klaviyo status identifier (use 'status' field instead for readability).
+      meta:
+        semantic_type: identifier
+    - name: variation_id
+      description: 'Identifier for A/B test variations. Multiple rows with same campaign_id but different
+
+        variation_id indicate A/B split test campaigns.
+
+        '
+      meta:
+        semantic_type: identifier
+    - name: campaign_variation_key
+      description: Composite key combining campaign_id and variation_id.
+      meta:
+        semantic_type: identifier
+    - name: total_count_unique_people
+      description: 'Number of unique recipients (people) who received this campaign.
+
+        Denominator for calculating open rate and click rate percentages.
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: people
+        business_terms:
+        - recipients
+        - sends
+        - audience_size
+    - name: count_received_email
+      description: 'Total count of email received events (may include duplicates if sent multiple times).
+
+        Use unique_count_received_email for deduplicated recipient count.
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: events
+    - name: unique_count_received_email
+      description: 'Unique count of people who received the email (should match total_count_unique_people).
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: people
+    - name: count_opened_email
+      description: 'Total email open events (includes multiple opens by same person).
+
+        Divide by unique_count_received_email for raw open rate.
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: events
+        business_terms:
+        - opens
+        - email_opens
+    - name: unique_count_opened_email
+      description: 'Unique people who opened the email at least once.
+
+        **Open Rate = unique_count_opened_email / unique_count_received_email**
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: people
+        business_terms:
+        - unique_opens
+        - openers
+    - name: count_clicked_email
+      description: 'Total email click events (includes multiple clicks by same person).
+
+        Use for measuring total engagement intensity.
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: events
+        business_terms:
+        - clicks
+        - email_clicks
+    - name: unique_count_clicked_email
+      description: 'Unique people who clicked any link in the email.
+
+        **Click Rate = unique_count_clicked_email / unique_count_received_email**
+
+        **Click-to-Open Rate = unique_count_clicked_email / unique_count_opened_email**
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: people
+        business_terms:
+        - unique_clicks
+        - clickers
+    - name: count_marked_email_as_spam
+      description: 'Total spam complaint events. High values indicate deliverability issues.
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: events
+        business_terms:
+        - spam_complaints
+        - abuse_reports
+    - name: unique_count_marked_email_as_spam
+      description: 'Unique people who marked email as spam. Monitor closely - high rates harm sender reputation.
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: people
+    - name: count_unsubscribed
+      description: 'Total unsubscribe events triggered by this campaign.
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: events
+        business_terms:
+        - unsubscribes
+        - opt_outs
+    - name: unique_count_unsubscribed
+      description: 'Unique people who unsubscribed after receiving this campaign.
+
+        **Unsubscribe Rate = unique_count_unsubscribed / unique_count_received_email**
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: people
+    - name: count_received_sms
+      description: Total SMS received events (if campaign included SMS component).
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: events
+    - name: unique_count_received_sms
+      description: Unique recipients of SMS messages.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: people
+    - name: count_clicked_sms
+      description: Total SMS link click events.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: events
+    - name: unique_count_clicked_sms
+      description: Unique people who clicked SMS links.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: people
+    - name: count_sent_sms
+      description: Total SMS send events.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: events
+    - name: unique_count_sent_sms
+      description: Unique SMS recipients.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: people
+    - name: count_unsubscribed_from_sms
+      description: Total SMS unsubscribe events.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: events
+    - name: unique_count_unsubscribed_from_sms
+      description: Unique people who unsubscribed from SMS.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: people
+    - name: sum_revenue_placed_order
+      description: 'Total revenue from "Placed Order" events attributed to this campaign.
+
+        Uses Klaviyo''s attribution window (typically last-touch within 5 days).
+
+        **Primary metric for campaign ROI calculation.**
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - attributed_revenue
+        - email_revenue
+        - campaign_revenue
+    - name: count_placed_order
+      description: 'Total "Placed Order" events attributed to campaign.
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: events
+        business_terms:
+        - orders
+        - conversions
+    - name: unique_count_placed_order
+      description: 'Unique customers who placed an order attributed to this campaign.
+
+        **Conversion Rate = unique_count_placed_order / unique_count_received_email**
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: people
+        business_terms:
+        - converters
+        - buyers
+    - name: sum_revenue_ordered_product
+      description: 'Revenue from "Ordered Product" events (may differ from Placed Order due to
+
+        line item vs order-level tracking).
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: count_ordered_product
+      description: Total "Ordered Product" events.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: events
+    - name: unique_count_ordered_product
+      description: Unique customers who ordered a product.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: people
+    - name: sum_revenue_checkout_started
+      description: 'Revenue value from "Started Checkout" events (potential revenue, not finalized).
+
+        Use to calculate checkout abandonment rates.
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - checkout_value
+        - cart_value
+    - name: sum_revenue_refunded_order
+      description: 'Revenue refunded from orders attributed to this campaign.
+
+        **Net Revenue = sum_revenue_placed_order - sum_revenue_refunded_order**
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: count_refunded_order
+      description: Total refund events.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: events
+    - name: unique_count_refunded_order
+      description: Unique customers who refunded an order.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: people
+    - name: sum_revenue_cancelled_order
+      description: Revenue from cancelled orders.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: count_active_on_site
+      description: 'Total "Active on Site" events (customers who visited website after email).
+
+        Use to measure email''s ability to drive website traffic.
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: events
+        business_terms:
+        - site_visits
+        - web_sessions
+    - name: unique_count_active_on_site
+      description: 'Unique customers who visited website after receiving campaign.
+
+        **Site Visit Rate = unique_count_active_on_site / unique_count_received_email**
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: people
+    - name: count_viewed_product
+      description: Total "Viewed Product" events attributed to campaign.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: events
+    - name: unique_count_viewed_product
+      description: Unique customers who viewed a product page.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: people
+    - name: first_event_at
+      description: 'Timestamp of first engagement event (open, click, purchase) for this campaign.
+
+        Use to measure time-to-first-engagement.
+
+        '
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: last_event_at
+      description: 'Timestamp of most recent engagement event. Use to identify long-tail
+
+        campaign performance (opens/clicks days after send).
+
+        '
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: source_relation
+      description: Fivetran connector identifier (useful if syncing multiple Klaviyo accounts).
+      meta:
+        semantic_type: dimension
+        cardinality: low
+  - name: klaviyo__events
+    description: 'Granular event-level tracking for all Klaviyo interactions (email opens, clicks,
+
+      site activity, purchases). This is the most detailed table for behavioral analysis.
+
+
+      **Use for**: Click-through attribution, event sequencing, customer journey mapping,
+
+      funnel analysis from email to purchase.
+
+
+      **Key event types** (metric_id):
+
+      - Received Email, Opened Email, Clicked Email
+
+      - Active on Site, Viewed Product
+
+      - Started Checkout, Placed Order, Ordered Product
+
+      - Marked Email as Spam, Unsubscribed
+
+
+      **Grain**: One row per event occurrence (event_id/unique_event_id)
+
+      '
+    columns:
+    - name: event_id
+      description: 'Primary key. Unique identifier for each event occurrence.
+
+        '
+      meta:
+        semantic_type: identifier
+        is_primary_key: true
+    - name: unique_event_id
+      description: 'Alternative unique event identifier (Fivetran-generated composite key).
+
+        Use event_id as the canonical primary key.
+
+        '
+      meta:
+        semantic_type: identifier
+    - name: uuid
+      description: Universal unique identifier for the event (Klaviyo internal).
+      meta:
+        semantic_type: identifier
+    - name: metric_id
+      description: 'Foreign key to Klaviyo metric definitions. Indicates event type:
+
+        - Email engagement: Received Email, Opened Email, Clicked Email, Bounced Email
+
+        - Site activity: Active on Site, Viewed Product, Added to Cart
+
+        - Purchase: Started Checkout, Placed Order, Ordered Product, Fulfilled Order
+
+        - Unsubscribes: Unsubscribed, Marked Email as Spam
+
+
+        Join to a metric mapping table or use type/last_touch_event_type for
+
+        human-readable event names.
+
+        '
+      meta:
+        semantic_type: identifier
+        business_terms:
+        - event_type
+        - metric
+    - name: type
+      description: 'High-level event type classification (e.g., "email", "metric", "flow").
+
+        Typically ''metric'' for most events.
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: occurred_at
+      description: 'Event timestamp (when the action occurred). **Use as the canonical event time.**
+
+        For emails: open time, click time, etc.
+
+        For purchases: order placement time.
+
+        '
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+        is_event_time: true
+    - name: occurred_on
+      description: 'Date-only version of occurred_at (YYYY-MM-DD). Use for daily aggregations.
+
+        '
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: person_id
+      description: 'Foreign key to klaviyo__persons. Klaviyo''s unique customer identifier.
+
+        Join to person_id to get email address, demographic info, and lifetime metrics.
+
+        '
+      meta:
+        semantic_type: identifier
+        business_terms:
+        - customer_id
+        - profile_id
+    - name: person_email
+      description: 'Email address of the person who triggered the event.
+
+        **Join to Shopify**: LOWER(person_email) = LOWER(shopify.email)
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - email_address
+        pii: true
+    - name: person_city
+      description: Customer's city (from Klaviyo profile or event metadata).
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: person_country
+      description: Customer's country.
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: person_region
+      description: Customer's state/region.
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: person_timezone
+      description: Customer's timezone (from Klaviyo profile).
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: campaign_id
+      description: 'Foreign key to klaviyo__campaigns. Populated if event is attributed to a
+
+        one-time campaign send. NULL for flow emails or organic events.
+
+        '
+      meta:
+        semantic_type: identifier
+    - name: campaign_name
+      description: Denormalized campaign name (from klaviyo__campaigns).
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: campaign_type
+      description: Denormalized campaign type.
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: campaign_subject_line
+      description: Subject line of the campaign email (if applicable).
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: variation_id
+      description: Campaign A/B test variation identifier.
+      meta:
+        semantic_type: identifier
+    - name: flow_id
+      description: 'Foreign key to klaviyo__flows. Populated if event is attributed to an
+
+        automated flow email (e.g., welcome series, abandoned cart).
+
+        '
+      meta:
+        semantic_type: identifier
+    - name: flow_name
+      description: 'Denormalized flow name (e.g., "Welcome Series", "Post-Purchase Follow-Up",
+
+        "Sample Order Nurture"). Critical for Florret''s sample-to-purchase tracking.
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: flow_message_id
+      description: 'Identifier for specific message within a flow (e.g., "Welcome Email 1",
+
+        "Welcome Email 2"). Use to analyze per-message performance in multi-step flows.
+
+        '
+      meta:
+        semantic_type: identifier
+    - name: event_attribution
+      description: 'Attribution model applied to this event (e.g., "last_touch", "first_touch").
+
+        Klaviyo typically uses last-touch attribution within a 5-day window.
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: low
+        business_terms:
+        - attribution_model
+    - name: touch_id
+      description: 'Identifier for the marketing "touch" (campaign or flow interaction) that
+
+        led to this event. Used in multi-touch attribution analysis.
+
+        '
+      meta:
+        semantic_type: identifier
+    - name: touch_type
+      description: 'Type of touch (e.g., "email", "sms"). Indicates channel that drove the event.
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: last_touch_campaign_id
+      description: 'Campaign ID of the last marketing touch before this event.
+
+        Use for last-touch attribution modeling.
+
+        '
+      meta:
+        semantic_type: identifier
+    - name: last_touch_flow_id
+      description: 'Flow ID of the last marketing touch before this event.
+
+        '
+      meta:
+        semantic_type: identifier
+    - name: last_touch_at
+      description: 'Timestamp of the last marketing touch. Calculate time-to-conversion:
+
+        occurred_at - last_touch_at = conversion lag time.
+
+        '
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: last_touch_event_type
+      description: 'Event type of the last touch (e.g., "Opened Email", "Clicked Email").
+
+        Use to analyze which engagement types drive conversions.
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: last_touch_type
+      description: Channel type of last touch (e.g., "email", "sms").
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: numeric_value
+      description: 'Numeric value associated with event (typically revenue for purchase events).
+
+        For "Placed Order" events, this is order total.
+
+        For "Ordered Product" events, this is line item price.
+
+        For engagement events (opens/clicks), typically NULL.
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - event_revenue
+        - event_value
+    - name: integration_id
+      description: 'Identifier for the integration that generated the event (e.g., Shopify,
+
+        custom API). Use to filter events by source system.
+
+        '
+      meta:
+        semantic_type: identifier
+    - name: integration_name
+      description: 'Human-readable integration name (e.g., "Shopify", "API", "Klaviyo").
+
+        Filter to integration_name = ''Shopify'' for purchase events synced from Shopify.
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: low
+        business_terms:
+        - event_source
+        - data_source
+    - name: integration_category
+      description: 'Integration category (e.g., "ecommerce", "email", "analytics").
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: _fivetran_synced
+      description: Fivetran sync timestamp (ETL metadata, not business-relevant).
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: source_relation
+      description: Fivetran connector identifier.
+      meta:
+        semantic_type: dimension
+        cardinality: low
+  - name: klaviyo__flows
+    description: 'Automated email flow (drip campaign) performance metrics. Flows are triggered
+
+      by customer actions (e.g., placed first order, abandoned cart, sample order).
+
+
+      **Use for**: Nurture campaign analysis, automated revenue tracking, flow optimization.
+
+
+      **Florret use case**: Analyze "Sample Order Nurture" flow performance - how many
+
+      customers who ordered samples are being converted to product purchases via email.
+
+
+      **Grain**: One row per flow (flow_id)
+
+      '
+    columns:
+    - name: flow_id
+      description: 'Primary key. Unique identifier for each automated flow.
+
+        Join to klaviyo__events.flow_id for event-level drill-down.
+
+        '
+      meta:
+        semantic_type: identifier
+        is_primary_key: true
+    - name: flow_name
+      description: 'Human-readable flow name (e.g., "Welcome Series", "Abandoned Cart",
+
+        "Post-Sample Order Follow-Up"). Critical for identifying sample nurture flows.
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: trigger_type
+      description: 'Event that triggers the flow (e.g., "Placed Order", "Added to Cart",
+
+        "Subscribed to List"). Use to understand flow entry conditions.
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: low
+        business_terms:
+        - flow_trigger
+        - automation_trigger
+    - name: status
+      description: 'Current flow status (e.g., "live", "draft", "manual", "archived").
+
+        Filter status = ''live'' for active flow analysis.
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: low
+        expected_values:
+        - live
+        - draft
+        - manual
+        - archived
+    - name: is_archived
+      description: 'Boolean flag for archived flows. Filter is_archived = false for active flows.
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: created_at
+      description: Flow creation timestamp in Klaviyo.
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: updated_at
+      description: Last modification timestamp for flow settings.
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: variation_id
+      description: Flow A/B test variation identifier.
+      meta:
+        semantic_type: identifier
+    - name: flow_variation_key
+      description: Composite key combining flow_id and variation_id.
+      meta:
+        semantic_type: identifier
+    - name: total_count_unique_people
+      description: 'Number of unique customers who entered this flow (triggered the automation).
+
+        Denominator for flow conversion rate calculations.
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: people
+        business_terms:
+        - flow_entries
+        - triggered_users
+    - name: count_received_email
+      description: Total email received events across all flow messages.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: events
+    - name: unique_count_received_email
+      description: Unique people who received at least one flow email.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: people
+    - name: count_opened_email
+      description: Total email opens across all flow messages.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: events
+    - name: unique_count_opened_email
+      description: 'Unique people who opened at least one flow email.
+
+        **Flow Open Rate = unique_count_opened_email / unique_count_received_email**
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: people
+    - name: count_clicked_email
+      description: Total email clicks across all flow messages.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: events
+    - name: unique_count_clicked_email
+      description: 'Unique people who clicked at least one flow email.
+
+        **Flow Click Rate = unique_count_clicked_email / unique_count_received_email**
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: people
+    - name: count_marked_email_as_spam
+      description: Total spam complaints triggered by flow emails.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: events
+    - name: unique_count_marked_email_as_spam
+      description: Unique people who marked flow emails as spam.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: people
+    - name: count_unsubscribed
+      description: Total unsubscribe events triggered by flow emails.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: events
+    - name: unique_count_unsubscribed
+      description: Unique people who unsubscribed during the flow.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: people
+    - name: count_received_sms
+      description: Total SMS received events (if flow includes SMS).
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: events
+    - name: unique_count_received_sms
+      description: Unique SMS recipients in flow.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: people
+    - name: count_clicked_sms
+      description: Total SMS link clicks.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: events
+    - name: unique_count_clicked_sms
+      description: Unique people who clicked SMS links.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: people
+    - name: count_sent_sms
+      description: Total SMS send events.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: events
+    - name: unique_count_sent_sms
+      description: Unique SMS send recipients.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: people
+    - name: count_unsubscribed_from_sms
+      description: Total SMS unsubscribe events.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: events
+    - name: unique_count_unsubscribed_from_sms
+      description: Unique people who unsubscribed from SMS.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: people
+    - name: sum_revenue_placed_order
+      description: 'Total revenue from orders attributed to this flow.
+
+        **Primary metric for flow ROI calculation.**
+
+
+        For Florret: Compare sample order nurture flow revenue to other flows to
+
+        measure effectiveness of sample-to-purchase conversion emails.
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - flow_revenue
+        - attributed_revenue
+    - name: count_placed_order
+      description: Total orders attributed to flow.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: events
+    - name: unique_count_placed_order
+      description: 'Unique customers who placed an order attributed to flow.
+
+        **Flow Conversion Rate = unique_count_placed_order / total_count_unique_people**
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: people
+    - name: sum_revenue_ordered_product
+      description: Revenue from "Ordered Product" events.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: count_ordered_product
+      description: Total "Ordered Product" events.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: events
+    - name: unique_count_ordered_product
+      description: Unique customers who ordered a product.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: people
+    - name: sum_revenue_checkout_started
+      description: Revenue value from "Started Checkout" events.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: sum_revenue_refunded_order
+      description: 'Revenue refunded from flow-attributed orders.
+
+        **Net Flow Revenue = sum_revenue_placed_order - sum_revenue_refunded_order**
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: count_refunded_order
+      description: Total refund events.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: events
+    - name: unique_count_refunded_order
+      description: Unique customers who refunded an order.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: people
+    - name: sum_revenue_cancelled_order
+      description: Revenue from cancelled orders.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: count_active_on_site
+      description: Total "Active on Site" events attributed to flow.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: events
+    - name: unique_count_active_on_site
+      description: Unique customers who visited website after receiving flow email.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: people
+    - name: count_viewed_product
+      description: Total "Viewed Product" events.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: events
+    - name: unique_count_viewed_product
+      description: Unique customers who viewed a product page.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: people
+    - name: first_event_at
+      description: 'Timestamp of first engagement event for this flow (earliest customer entry).
+
+        '
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: last_event_at
+      description: 'Timestamp of most recent engagement event (latest customer activity).
+
+        '
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: source_relation
+      description: Fivetran connector identifier.
+      meta:
+        semantic_type: dimension
+        cardinality: low
+  - name: klaviyo__person_campaign_flow
+    description: 'Bridge table connecting customers to their last-touch campaign/flow interactions.
+
+      Each row represents a unique person and their most recent attributed campaign OR flow.
+
+
+      **Use for**: Customer-level attribution analysis, identifying which campaigns/flows
+
+      drove each customer''s engagement and purchases.
+
+
+      **Grain**: One row per person_id + last touch campaign/flow combination
+
+      '
+    columns:
+    - name: person_id
+      description: 'Foreign key to klaviyo__persons. Unique Klaviyo customer identifier.
+
+        '
+      meta:
+        semantic_type: identifier
+        is_primary_key: true
+    - name: last_touch_campaign_id
+      description: 'Campaign ID of the customer''s most recent attributed campaign interaction.
+
+        NULL if last touch was a flow or organic.
+
+        '
+      meta:
+        semantic_type: identifier
+    - name: campaign_name
+      description: 'Denormalized name of the last-touch campaign.
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: last_touch_flow_id
+      description: 'Flow ID of the customer''s most recent attributed flow interaction.
+
+        NULL if last touch was a campaign or organic.
+
+        '
+      meta:
+        semantic_type: identifier
+    - name: flow_name
+      description: 'Denormalized name of the last-touch flow.
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: variation_id
+      description: Campaign/flow variation identifier (for A/B tests).
+      meta:
+        semantic_type: identifier
+    - name: first_event_at
+      description: 'Timestamp of customer''s first engagement with this campaign/flow.
+
+        '
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: last_event_at
+      description: 'Timestamp of customer''s most recent engagement with this campaign/flow.
+
+        '
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: sum_revenue_placed_order
+      description: 'Total revenue this customer generated, attributed to the last-touch campaign/flow.
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: count_placed_order
+      description: 'Number of orders this customer placed, attributed to the campaign/flow.
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: sum_revenue_ordered_product
+      description: Revenue from product orders (line-item level).
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: count_ordered_product
+      description: Count of product order events.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: sum_revenue_checkout_started
+      description: Checkout value initiated by customer.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: sum_revenue_refunded_order
+      description: Revenue refunded from this customer's orders.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: count_refunded_order
+      description: Number of refunds.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: sum_revenue_cancelled_order
+      description: Revenue from cancelled orders.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: count_active_on_site
+      description: Number of times customer visited site after campaign/flow.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_viewed_product
+      description: Number of product views.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_received_email
+      description: Number of emails received.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_clicked_email
+      description: Number of email clicks.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_opened_email
+      description: Number of email opens.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_marked_email_as_spam
+      description: Number of spam complaints.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_unsubscribed
+      description: Unsubscribe events (should be 0 or 1 per person).
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_received_sms
+      description: SMS received count.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_clicked_sms
+      description: SMS clicks.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_sent_sms
+      description: SMS sent count.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_unsubscribed_from_sms
+      description: SMS unsubscribe events.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: source_relation
+      description: Fivetran connector identifier.
+      meta:
+        semantic_type: dimension
+        cardinality: low
+  - name: klaviyo__persons
+    description: 'Customer profiles and lifetime engagement metrics in Klaviyo. Each row represents
+
+      a unique person (email address) with aggregated historical activity.
+
+
+      **Use for**: Customer segmentation, lifetime value analysis, email list health,
+
+      identifying high-engagement customers.
+
+
+      **Join to Shopify**: klaviyo__persons.email = LOWER(shopify.customers.email)
+
+
+      **Grain**: One row per person (person_id)
+
+      '
+    columns:
+    - name: person_id
+      description: 'Primary key. Unique Klaviyo customer identifier.
+
+        Join to klaviyo__events.person_id or klaviyo__person_campaign_flow.person_id.
+
+        '
+      meta:
+        semantic_type: identifier
+        is_primary_key: true
+        business_terms:
+        - profile_id
+        - customer_id
+    - name: email
+      description: 'Customer''s email address. **Primary join key to Shopify customer data.**
+
+        Use LOWER(email) for case-insensitive joins.
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - email_address
+        pii: true
+    - name: full_name
+      description: Customer's full name (first + last).
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        pii: true
+    - name: phone_number
+      description: 'Customer''s phone number (if collected). Used for SMS campaigns.
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        pii: true
+    - name: address_1
+      description: Street address line 1.
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        pii: true
+    - name: address_2
+      description: Street address line 2 (apartment, suite, etc.).
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        pii: true
+    - name: city
+      description: Customer's city.
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: region
+      description: 'Customer''s state/region. Use for regional campaign performance analysis.
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        business_terms:
+        - state
+        - province
+    - name: zip
+      description: Postal/ZIP code.
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        business_terms:
+        - postal_code
+        - zip_code
+    - name: country
+      description: Customer's country.
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: latitude
+      description: Latitude coordinate (if geocoded).
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: longitude
+      description: Longitude coordinate (if geocoded).
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: timezone
+      description: 'Customer''s timezone. Use for send time optimization analysis.
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: organization
+      description: 'Company/organization name (if customer is a business).
+
+        Relevant for Florret''s commercial customers.
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        business_terms:
+        - company_name
+        - business_name
+    - name: title
+      description: Customer's job title (if collected).
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: created_at
+      description: 'When this customer profile was first created in Klaviyo.
+
+        Use to calculate customer tenure and cohort analysis.
+
+        '
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+        business_terms:
+        - profile_created_date
+        - signup_date
+    - name: updated_at
+      description: Last modification timestamp for customer profile data.
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: last_event_date
+      description: 'Date of customer''s most recent event (any type). Use to identify inactive customers.
+
+        '
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: first_event_at
+      description: 'Timestamp of customer''s very first event in Klaviyo.
+
+        '
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: last_event_at
+      description: 'Timestamp of customer''s most recent event (any type).
+
+        '
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: first_campaign_touch_at
+      description: 'Timestamp of first campaign email received. Use to measure time-to-first-engagement.
+
+        '
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: last_campaign_touch_at
+      description: 'Timestamp of most recent campaign email received.
+
+        '
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: first_flow_touch_at
+      description: 'Timestamp of first flow email received.
+
+        '
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: last_flow_touch_at
+      description: 'Timestamp of most recent flow email received.
+
+        '
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: count_total_campaigns
+      description: 'Number of unique campaigns this customer has interacted with.
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_total_flows
+      description: 'Number of unique flows this customer has entered.
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: total_sum_revenue_placed_order
+      description: 'Customer''s total lifetime revenue from placed orders (all touchpoints:
+
+        campaigns, flows, organic). **Use for lifetime value (LTV) analysis.**
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - ltv
+        - lifetime_value
+        - total_revenue
+    - name: total_count_placed_order
+      description: 'Total number of orders placed by this customer (all touchpoints).
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: total_sum_revenue_ordered_product
+      description: Total revenue from product orders (line-item level).
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: total_count_ordered_product
+      description: Total product order events.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: total_sum_revenue_checkout_started
+      description: Total checkout value initiated.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: total_sum_revenue_refunded_order
+      description: 'Total revenue refunded.
+
+        **Net LTV = total_sum_revenue_placed_order - total_sum_revenue_refunded_order**
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: total_count_refunded_order
+      description: Total refund events.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: total_sum_revenue_cancelled_order
+      description: Total revenue from cancelled orders.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: organic_sum_revenue_placed_order
+      description: 'Revenue from orders NOT attributed to any campaign or flow (organic purchases).
+
+        **Attributed Revenue = total_sum_revenue_placed_order - organic_sum_revenue_placed_order**
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - organic_revenue
+        - non_attributed_revenue
+    - name: organic_sum_revenue_ordered_product
+      description: Organic revenue from product orders.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: organic_sum_revenue_checkout_started
+      description: Organic checkout value.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: organic_sum_revenue_refunded_order
+      description: Organic refunded revenue.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: organic_sum_revenue_cancelled_order
+      description: Organic cancelled order revenue.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: total_count_active_on_site
+      description: Total number of site visit events.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: total_count_viewed_product
+      description: Total product view events.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: total_count_received_email
+      description: 'Total emails received (campaigns + flows). Use to identify email frequency
+
+        and prevent over-emailing.
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: total_count_opened_email
+      description: 'Total email open events. Calculate individual open rate:
+
+        total_count_opened_email / total_count_received_email
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: total_count_clicked_email
+      description: 'Total email click events. Calculate individual click rate:
+
+        total_count_clicked_email / total_count_received_email
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: total_count_marked_email_as_spam
+      description: 'Total spam complaints. Flag customers with > 0 for suppression.
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: total_count_unsubscribed
+      description: 'Unsubscribe events (typically 0 or 1). Filter total_count_unsubscribed = 0
+
+        for subscribed customers.
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: total_count_received_sms
+      description: Total SMS received.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: total_count_clicked_sms
+      description: Total SMS clicks.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: total_count_sent_sms
+      description: Total SMS sent.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: total_count_unsubscribed_from_sms
+      description: SMS unsubscribe events.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: source_relation
+      description: Fivetran connector identifier.
+      meta:
+        semantic_type: dimension
+        cardinality: low

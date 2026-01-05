@@ -1,0 +1,19 @@
+version: 2
+sources:
+- name: ft_amazon_seller_central_amazon_selling_partner
+  description: 'Amazon Seller Central data for FBA (Fulfillment by Amazon) sales and inventory. Tracks marketplace orders, order items, inventory levels, and fulfillment fees. Critical for understanding Amazon channel performance and profitability after Amazon fees.
+
+    '
+  tables:
+  - name: amazon_selling_partner__item_inventory
+    description: 'Current inventory levels for products sold on Amazon. Includes ASIN (Amazon Standard Identification Number), SKU, available quantity, and product attributes for catalog management.
+
+      '
+  - name: amazon_selling_partner__order_items
+    description: 'Line items for Amazon orders with pricing, quantity, and product details. Use for revenue analysis and product-level sales performance. Join to orders table for customer and fulfillment information.
+
+      '
+  - name: amazon_selling_partner__orders
+    description: 'Amazon marketplace orders with customer, shipping, and fulfillment details. Includes order status, purchase date, shipping address, and order totals. Critical for sales tracking and revenue reconciliation.
+
+      '

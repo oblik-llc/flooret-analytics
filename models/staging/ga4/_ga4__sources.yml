@@ -1,0 +1,1045 @@
+version: 2
+sources:
+- name: analytics_266190494
+  description: 'Google Analytics 4 (GA4) BigQuery export data for Florret''s e-commerce analytics.
+
+
+    This dataset contains raw event-level data from GA4, including:
+
+    - Page views, user interactions, and custom events
+
+    - E-commerce transactions (purchases, cart actions, product views)
+
+    - User behavior and session data
+
+    - Traffic source and campaign attribution
+
+    - Device, geography, and audience dimensions
+
+
+    Data is exported daily to date-sharded tables (events_YYYYMMDD format).
+
+    '
+  tables:
+  - name: events_*
+    description: 'Date-sharded GA4 events table containing all user interactions and e-commerce events.
+
+      Each row represents a single event fired on the website.
+
+
+      Sharding: 997 daily shards from 2023-04-13 to 2026-01-03
+
+
+      Common event types for e-commerce:
+
+      - page_view: User views a page
+
+      - session_start: New session begins
+
+      - view_item: Product detail page view
+
+      - add_to_cart: Item added to shopping cart
+
+      - begin_checkout: Checkout process started
+
+      - purchase: Transaction completed
+
+      - view_item_list: Product category/collection viewed
+
+      - select_item: Product clicked from list
+
+
+      Query pattern: Use wildcard syntax `FROM events_*` or specific date ranges `FROM events_20240101`
+
+      '
+    columns:
+    - name: event_date
+      description: 'Date when the event was logged in YYYYMMDD format (STRING type in BigQuery).
+
+        This is the partition key for the sharded tables.
+
+
+        Note: This represents the date in the property''s timezone, not UTC.
+
+        Use for date filtering and aggregations by day.
+
+        '
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: event_timestamp
+      description: 'Precise timestamp when the event was logged, measured in microseconds since Unix epoch (Jan 1, 1970).
+
+
+        Usage:
+
+        - Convert to datetime: TIMESTAMP_MICROS(event_timestamp)
+
+        - For Pacific time: DATETIME(TIMESTAMP_MICROS(event_timestamp), "America/Los_Angeles")
+
+        - Calculate time between events: (event_timestamp - previous_timestamp) / 1000000 for seconds
+
+
+        This is the canonical timestamp for event ordering and session analysis.
+
+        '
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: event_name
+      description: 'The name of the event being tracked. Mix of standard GA4 events and custom events.
+
+
+        Standard e-commerce events:
+
+        - purchase: Completed transaction
+
+        - add_to_cart: Item added to cart
+
+        - remove_from_cart: Item removed from cart
+
+        - view_item: Product detail viewed
+
+        - view_item_list: Product listing/category viewed
+
+        - select_item: Product clicked from list
+
+        - begin_checkout: Checkout initiated
+
+        - add_payment_info: Payment info entered
+
+        - add_shipping_info: Shipping info entered
+
+
+        Standard engagement events:
+
+        - page_view: Page loaded
+
+        - scroll: User scrolled page
+
+        - click: Element clicked
+
+        - session_start: New session
+
+        - first_visit: First time visitor
+
+        - user_engagement: Engaged session
+
+
+        Custom events may include business-specific tracking (e.g., sample_request, color_selection).
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: event_params
+      description: "ARRAY of key-value pairs containing event-specific parameters (RECORD type).\nStructure: ARRAY<STRUCT<key STRING, value RECORD>>\n\nCommon e-commerce parameters (access via unnesting):\n- transaction_id: Unique order identifier\n- value: Transaction value\n- currency: Currency code (e.g., \"USD\")\n- tax: Tax amount\n- shipping: Shipping cost\n- coupon: Coupon code applied\n- item_id: Product SKU\n- item_name: Product name\n- item_category: Product category\n- page_location: Full URL\n- page_referrer: Referring URL\n- ga_session_id: Session identifier\n- engagement_time_msec: Time engaged on page\n\nQuery pattern:\n```sql\nSELECT\n  (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'page_location') AS page_url,\n  (SELECT value.int_value FROM UNNEST(event_params) WHERE key = 'ga_session_id') AS session_id\nFROM events_*\n```\n"
+      meta:
+        semantic_type: nested_attributes
+        contains: event_parameters
+    - name: event_previous_timestamp
+      description: 'Timestamp in microseconds of the previous event for this user (within the same session).
+
+        NULL for the first event in a session.
+
+
+        Use to calculate:
+
+        - Time between events: (event_timestamp - event_previous_timestamp) / 1000000
+
+        - User engagement patterns
+
+        - Session flow analysis
+
+        '
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: event_value_in_usd
+      description: 'The currency-converted value of the event in USD.
+
+
+        - For purchase events: Total transaction value
+
+        - For other events: Custom value assigned via measurement protocol or automatically
+
+        - NULL if no value associated with event
+
+
+        Use for revenue analysis, conversion value optimization, and ROI calculations.
+
+        Note: May differ from ecommerce.purchase_revenue due to currency conversion timing.
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: event_bundle_sequence_id
+      description: 'Sequential ID for the bundle of events uploaded together.
+
+        Events are uploaded in batches; this tracks the upload bundle order.
+
+
+        Use for debugging data freshness and identifying event upload patterns.
+
+        '
+      meta:
+        semantic_type: identifier
+    - name: event_server_timestamp_offset
+      description: 'Offset in microseconds between when the event was logged on client vs. received by server.
+
+
+        Positive value: Event logged on client before received by server (typical)
+
+        Negative value: Clock skew or offline event later uploaded
+
+
+        Use to identify:
+
+        - Network latency issues
+
+        - Offline event collection
+
+        - Client-side timing problems
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: avg
+    - name: user_id
+      description: 'User ID set via setUserId() in GA4 or User-ID feature.
+
+        Represents authenticated user identifier (e.g., customer ID, email hash).
+
+
+        NULL for unauthenticated users or if User-ID not implemented.
+
+
+        Critical for Florret: Cross-device tracking for logged-in customers.
+
+        Join to Shopify customer data using this field if available.
+
+        '
+      meta:
+        semantic_type: identifier
+        is_primary_key: false
+    - name: user_pseudo_id
+      description: 'Cookie-based unique identifier for the user, set by GA4''s client ID.
+
+        Persists across sessions on the same browser/device.
+
+
+        Format: Typically a UUID-like string
+
+        Scope: Per-device, not per-user (same person on mobile + desktop = 2 pseudo IDs)
+
+
+        Use as primary user identifier when user_id is NULL.
+
+        For cross-device analysis, prefer user_id or join to Shopify via email.
+
+        '
+      meta:
+        semantic_type: identifier
+        is_primary_key: false
+    - name: privacy_info
+      description: 'RECORD containing privacy and consent signals.
+
+        Structure: STRUCT<analytics_storage STRING, ads_storage STRING, uses_transient_token STRING>
+
+
+        Fields:
+
+        - analytics_storage: "Yes"/"No" - User consented to analytics cookies
+
+        - ads_storage: "Yes"/"No" - User consented to advertising cookies
+
+        - uses_transient_token: Token-based measurement mode indicator
+
+
+        Use to filter for GDPR compliance or analyze consent impact on data quality.
+
+        '
+      meta:
+        semantic_type: nested_attributes
+        contains: privacy_consent_info
+    - name: user_properties
+      description: "ARRAY of user-scoped custom dimensions set via setUserProperties().\nStructure: ARRAY<STRUCT<key STRING, value RECORD>>\n\nCommon properties:\n- customer_type: New vs. returning customer\n- lifetime_value: User LTV\n- first_purchase_date: Date of first transaction\n- Custom audience segments\n\nQuery pattern:\n```sql\nSELECT\n  (SELECT value.string_value FROM UNNEST(user_properties) WHERE key = 'customer_type') AS customer_type\nFROM events_*\n```\n"
+      meta:
+        semantic_type: nested_attributes
+        contains: user_custom_dimensions
+    - name: user_first_touch_timestamp
+      description: 'Timestamp in microseconds when the user first visited the site (lifetime first touch).
+
+        Persists across all sessions for the user.
+
+
+        Use to calculate:
+
+        - User age/tenure: Days since first visit
+
+        - Time to conversion: Days from first visit to purchase
+
+        - New vs. returning visitor classification
+
+
+        Convert to datetime: TIMESTAMP_MICROS(user_first_touch_timestamp)
+
+        '
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: user_ltv
+      description: 'RECORD containing predicted and actual Lifetime Value metrics.
+
+        Structure: STRUCT<revenue FLOAT64, currency STRING>
+
+
+        Fields:
+
+        - revenue: Total revenue attributed to user (in original currency)
+
+        - currency: Currency code
+
+
+        Note: GA4''s LTV calculation may differ from Shopify''s actual customer LTV.
+
+        For Florret, prefer calculating LTV directly from Shopify order data.
+
+        '
+      meta:
+        semantic_type: nested_attributes
+        contains: lifetime_value_metrics
+    - name: device
+      description: "RECORD containing device information for the user's session.\nStructure: Multiple fields including category, mobile_brand_name, operating_system, browser, etc.\n\nKey fields:\n- device.category: \"desktop\", \"mobile\", \"tablet\"\n- device.mobile_brand_name: \"Apple\", \"Samsung\", etc.\n- device.mobile_model_name: \"iPhone 14\", \"Galaxy S23\", etc.\n- device.operating_system: \"iOS\", \"Android\", \"Windows\", \"Macintosh\"\n- device.operating_system_version: Version string\n- device.browser: \"Chrome\", \"Safari\", \"Firefox\", etc.\n- device.browser_version: Browser version\n- device.language: Browser language setting\n- device.is_limited_ad_tracking: Ad tracking restriction status\n- device.web_info.browser: Browser name (web only)\n- device.web_info.browser_version: Browser version (web only)\n- device.web_info.hostname: Website hostname\n\nUse for device segmentation, mobile vs. desktop analysis, browser compatibility tracking.\n\nQuery example:\n```sql\nSELECT\n\
+        \  device.category AS device_type,\n  device.operating_system AS os,\n  COUNT(*) AS sessions\nFROM events_*\nWHERE event_name = 'session_start'\nGROUP BY 1, 2\n```\n"
+      meta:
+        semantic_type: nested_attributes
+        contains: device_information
+    - name: geo
+      description: "RECORD containing geographic location of the user based on IP address.\n\nFields:\n- geo.continent: Continent name (e.g., \"Americas\", \"Europe\")\n- geo.sub_continent: Sub-continent (e.g., \"Northern America\")\n- geo.country: Country name (e.g., \"United States\")\n- geo.region: State/region (e.g., \"California\")\n- geo.metro: Metro area (e.g., \"San Francisco-Oakland-San Jose CA\")\n- geo.city: City name (e.g., \"San Francisco\")\n\nNote: Location is approximate based on IP. May be \"not set\" for VPN/privacy users.\n\nUse for:\n- Geographic performance analysis\n- Regional marketing effectiveness\n- Shipping cost correlation\n- Market expansion planning\n\nQuery example:\n```sql\nSELECT\n  geo.country,\n  geo.region,\n  COUNT(DISTINCT user_pseudo_id) AS users\nFROM events_*\nGROUP BY 1, 2\n```\n"
+      meta:
+        semantic_type: nested_attributes
+        contains: geographic_dimensions
+    - name: app_info
+      description: 'RECORD containing mobile app information (NULL for web traffic).
+
+
+        Fields:
+
+        - app_info.id: App bundle ID (e.g., com.florret.app)
+
+        - app_info.version: App version string
+
+        - app_info.install_store: "Apple App Store" or "Google Play Store"
+
+        - app_info.firebase_app_id: Firebase project ID
+
+
+        For Florret (web-only), this will typically be NULL.
+
+        '
+      meta:
+        semantic_type: nested_attributes
+        contains: mobile_app_info
+    - name: traffic_source
+      description: "RECORD containing attribution data for the user's first visit (acquisition source).\nThis is user-scoped, not session-scoped.\n\nFields:\n- traffic_source.name: Campaign name (utm_campaign)\n- traffic_source.medium: Marketing medium (utm_medium): \"organic\", \"cpc\", \"email\", \"referral\", etc.\n- traffic_source.source: Traffic source (utm_source): \"google\", \"facebook\", \"newsletter\", etc.\n\nUse for user acquisition analysis and first-touch attribution.\n\nFor session-level attribution, use session_traffic_source_last_click instead.\n\nQuery example:\n```sql\nSELECT\n  traffic_source.source,\n  traffic_source.medium,\n  COUNT(DISTINCT user_pseudo_id) AS new_users\nFROM events_*\nWHERE event_name = 'first_visit'\nGROUP BY 1, 2\n```\n"
+      meta:
+        semantic_type: nested_attributes
+        contains: acquisition_attribution
+    - name: stream_id
+      description: 'Unique identifier for the GA4 data stream (property).
+
+        Multiple streams can exist per property (e.g., web + iOS + Android).
+
+
+        Use to filter data when combining multiple streams or tracking stream-specific metrics.
+
+        '
+      meta:
+        semantic_type: identifier
+    - name: platform
+      description: 'Platform where the event was logged.
+
+
+        Values: "WEB", "IOS", "ANDROID"
+
+
+        For Florret (web-only e-commerce), expect "WEB" exclusively.
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: event_dimensions
+      description: 'RECORD containing deprecated event-scoped custom dimensions.
+
+        GA4 migrated to event_params; this field exists for backwards compatibility.
+
+
+        Prefer using event_params for custom dimensions in new queries.
+
+        '
+      meta:
+        semantic_type: nested_attributes
+        contains: legacy_custom_dimensions
+    - name: ecommerce
+      description: "RECORD containing e-commerce transaction data for purchase events.\nNULL for non-purchase events.\n\nStructure and key fields:\n- ecommerce.transaction_id: Unique order ID (join to Shopify order_name or order_id)\n- ecommerce.purchase_revenue: Total revenue (subtotal + tax + shipping)\n- ecommerce.purchase_revenue_in_usd: Revenue in USD (currency converted)\n- ecommerce.refund_value: Refund amount (for refund events)\n- ecommerce.refund_value_in_usd: Refund in USD\n- ecommerce.shipping_value: Shipping cost\n- ecommerce.tax_value: Tax amount\n- ecommerce.unique_items: Count of unique items in transaction\n- ecommerce.total_item_quantity: Total quantity of all items\n\nCritical for Florret:\n- Join to Shopify via transaction_id = order_name\n- Compare GA4 revenue to Shopify net sales for data quality checks\n- Use for marketing attribution and channel ROI analysis\n\nQuery example:\n```sql\nSELECT\n  ecommerce.transaction_id AS order_id,\n  ecommerce.purchase_revenue AS\
+        \ revenue,\n  ecommerce.total_item_quantity AS items\nFROM events_*\nWHERE event_name = 'purchase'\n```\n"
+      meta:
+        semantic_type: nested_attributes
+        contains: ecommerce_transaction_data
+    - name: items
+      description: "ARRAY of e-commerce items (products) associated with the event.\nPopulated for e-commerce events: purchase, add_to_cart, view_item, etc.\n\nStructure: ARRAY<STRUCT<item_id STRING, item_name STRING, ...>>\n\nKey fields per item:\n- item_id: Product SKU (join to Shopify variant_sku)\n- item_name: Product title\n- item_brand: Brand name\n- item_category: Primary category\n- item_category2, item_category3, item_category4, item_category5: Category hierarchy\n- item_variant: Variant name (e.g., color, size)\n- price: Unit price\n- quantity: Quantity purchased/added\n- item_revenue: Total revenue for this item (price × quantity)\n- coupon: Item-level coupon code\n- affiliation: Store or affiliation ID\n- location_id: Physical store location (if applicable)\n- index: Position in product list (for view_item_list events)\n- promotion_id: Promotion identifier\n- promotion_name: Promotion name\n\nCritical for Florret product analysis:\n- Sample vs. product identification: Check item_name\
+        \ for \"Cut\", \"Sample\", \"Plank\"\n- Product category extraction: Parse item_category or item_id (SKU)\n- Color conversion tracking: Track item_id from view_item → add_to_cart → purchase\n\nQuery pattern:\n```sql\nSELECT\n  event_name,\n  item.item_id AS sku,\n  item.item_name AS product_name,\n  item.quantity,\n  item.price\nFROM events_*,\nUNNEST(items) AS item\nWHERE event_name IN ('purchase', 'add_to_cart', 'view_item')\n```\n"
+      meta:
+        semantic_type: nested_attributes
+        contains: ecommerce_line_items
+    - name: collected_traffic_source
+      description: 'RECORD containing the traffic source data collected at event time (session-scoped).
+
+
+        Fields:
+
+        - collected_traffic_source.manual_campaign_id: Campaign ID (utm_id)
+
+        - collected_traffic_source.manual_campaign_name: Campaign name (utm_campaign)
+
+        - collected_traffic_source.manual_source: Source (utm_source)
+
+        - collected_traffic_source.manual_medium: Medium (utm_medium)
+
+        - collected_traffic_source.manual_term: Keyword (utm_term)
+
+        - collected_traffic_source.manual_content: Ad content (utm_content)
+
+        - collected_traffic_source.gclid: Google Click ID (for Google Ads attribution)
+
+        - collected_traffic_source.dclid: Display & Video 360 Click ID
+
+        - collected_traffic_source.srsltid: Google Merchant Center click ID
+
+
+        Use for session-level attribution and campaign performance analysis.
+
+        Complements session_traffic_source_last_click for multi-touch attribution.
+
+        '
+      meta:
+        semantic_type: nested_attributes
+        contains: session_attribution
+    - name: is_active_user
+      description: 'Boolean flag indicating if the user was active in the specified time period.
+
+
+        TRUE: User had an engaged session (engagement_time_msec > 0 or 2+ page views/events)
+
+        FALSE/NULL: User did not meet engagement criteria
+
+
+        Use to calculate active users metric and distinguish engaged vs. bounced sessions.
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: batch_event_index
+      description: 'Zero-based index of the event within the uploaded batch.
+
+        Events are uploaded in batches; this indicates position within that batch.
+
+
+        Use for debugging event ordering and batch processing issues.
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: max
+    - name: batch_page_id
+      description: 'Identifier for the page view that generated this batch of events.
+
+        Groups events that occurred during a single page session.
+
+
+        Use to group events by page view for engagement analysis.
+
+        '
+      meta:
+        semantic_type: identifier
+    - name: batch_ordering_id
+      description: 'Monotonically increasing ID for ordering event batches.
+
+        Ensures events are processed in the correct sequence.
+
+
+        Use for event ordering and deduplication logic.
+
+        '
+      meta:
+        semantic_type: identifier
+    - name: session_traffic_source_last_click
+      description: "RECORD containing last-click attribution for the current session.\nThis represents the most recent traffic source that initiated the session.\n\nFields:\n- session_traffic_source_last_click.manual_campaign_id: Campaign ID\n- session_traffic_source_last_click.manual_campaign_name: Campaign name\n- session_traffic_source_last_click.manual_source: Traffic source\n- session_traffic_source_last_click.manual_medium: Marketing medium\n- session_traffic_source_last_click.manual_term: Search keyword\n- session_traffic_source_last_click.manual_content: Ad content variant\n- session_traffic_source_last_click.gclid: Google Ads click ID\n- session_traffic_source_last_click.dclid: Display & Video 360 click ID\n- session_traffic_source_last_click.srsltid: Shopping ads click ID\n\nCritical for Florret marketing analysis:\n- Last-touch attribution before purchase\n- Channel performance and ROI\n- Campaign effectiveness\n\nUse this for conversion attribution (vs. traffic_source for acquisition\
+        \ attribution).\n\nQuery example:\n```sql\nSELECT\n  session_traffic_source_last_click.manual_source AS source,\n  session_traffic_source_last_click.manual_medium AS medium,\n  COUNT(DISTINCT CASE WHEN event_name = 'purchase' THEN user_pseudo_id END) AS converters\nFROM events_*\nGROUP BY 1, 2\n```\n"
+      meta:
+        semantic_type: nested_attributes
+        contains: last_click_attribution
+    - name: publisher
+      description: 'RECORD containing Google Ad Manager publisher information (for publisher sites).
+
+        NULL for non-publisher properties.
+
+
+        Fields:
+
+        - publisher.name: Publisher name
+
+        - publisher.id: Publisher ID
+
+
+        For Florret (e-commerce site, not a publisher), this will be NULL.
+
+        '
+      meta:
+        semantic_type: nested_attributes
+        contains: publisher_info
+  - name: events_intraday_*
+    description: 'Real-time intraday GA4 events table, updated continuously throughout the current day.
+
+      Same schema as events_* but contains only today''s data with fresher updates.
+
+
+      Sharding: Single shard for today (e.g., events_intraday_20260104)
+
+
+      Key differences from events_*:
+
+      - Updates multiple times per day (vs. daily batch)
+
+      - Only contains current day''s data
+
+      - Replaced by events_YYYYMMDD in daily export
+
+
+      Use cases:
+
+      - Real-time dashboards
+
+      - Intraday performance monitoring
+
+      - Same-day purchase tracking
+
+
+      Best practice: Query events_* for historical analysis, events_intraday_* only for today''s data.
+
+
+      Note: Combine with events_* using UNION for "all data including today":
+
+      ```sql
+
+      SELECT * FROM events_*
+
+      WHERE _TABLE_SUFFIX BETWEEN ''20240101'' AND FORMAT_DATE(''%Y%m%d'', DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY))
+
+      UNION ALL
+
+      SELECT * FROM events_intraday_*
+
+      ```
+
+      '
+    columns:
+    - name: event_date
+      description: 'Date when the event was logged in YYYYMMDD format (STRING type in BigQuery).
+
+        This is the partition key for the sharded tables.
+
+
+        Note: This represents the date in the property''s timezone, not UTC.
+
+        Use for date filtering and aggregations by day.
+
+        '
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: event_timestamp
+      description: 'Precise timestamp when the event was logged, measured in microseconds since Unix epoch (Jan 1, 1970).
+
+
+        Usage:
+
+        - Convert to datetime: TIMESTAMP_MICROS(event_timestamp)
+
+        - For Pacific time: DATETIME(TIMESTAMP_MICROS(event_timestamp), "America/Los_Angeles")
+
+        - Calculate time between events: (event_timestamp - previous_timestamp) / 1000000 for seconds
+
+
+        This is the canonical timestamp for event ordering and session analysis.
+
+        '
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: event_name
+      description: 'The name of the event being tracked. Mix of standard GA4 events and custom events.
+
+
+        Standard e-commerce events:
+
+        - purchase: Completed transaction
+
+        - add_to_cart: Item added to cart
+
+        - remove_from_cart: Item removed from cart
+
+        - view_item: Product detail viewed
+
+        - view_item_list: Product listing/category viewed
+
+        - select_item: Product clicked from list
+
+        - begin_checkout: Checkout initiated
+
+        - add_payment_info: Payment info entered
+
+        - add_shipping_info: Shipping info entered
+
+
+        Standard engagement events:
+
+        - page_view: Page loaded
+
+        - scroll: User scrolled page
+
+        - click: Element clicked
+
+        - session_start: New session
+
+        - first_visit: First time visitor
+
+        - user_engagement: Engaged session
+
+
+        Custom events may include business-specific tracking (e.g., sample_request, color_selection).
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: event_params
+      description: "ARRAY of key-value pairs containing event-specific parameters (RECORD type).\nStructure: ARRAY<STRUCT<key STRING, value RECORD>>\n\nCommon e-commerce parameters (access via unnesting):\n- transaction_id: Unique order identifier\n- value: Transaction value\n- currency: Currency code (e.g., \"USD\")\n- tax: Tax amount\n- shipping: Shipping cost\n- coupon: Coupon code applied\n- item_id: Product SKU\n- item_name: Product name\n- item_category: Product category\n- page_location: Full URL\n- page_referrer: Referring URL\n- ga_session_id: Session identifier\n- engagement_time_msec: Time engaged on page\n\nQuery pattern:\n```sql\nSELECT\n  (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'page_location') AS page_url,\n  (SELECT value.int_value FROM UNNEST(event_params) WHERE key = 'ga_session_id') AS session_id\nFROM events_*\n```\n"
+      meta:
+        semantic_type: nested_attributes
+        contains: event_parameters
+    - name: event_previous_timestamp
+      description: 'Timestamp in microseconds of the previous event for this user (within the same session).
+
+        NULL for the first event in a session.
+
+
+        Use to calculate:
+
+        - Time between events: (event_timestamp - event_previous_timestamp) / 1000000
+
+        - User engagement patterns
+
+        - Session flow analysis
+
+        '
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: event_value_in_usd
+      description: 'The currency-converted value of the event in USD.
+
+
+        - For purchase events: Total transaction value
+
+        - For other events: Custom value assigned via measurement protocol or automatically
+
+        - NULL if no value associated with event
+
+
+        Use for revenue analysis, conversion value optimization, and ROI calculations.
+
+        Note: May differ from ecommerce.purchase_revenue due to currency conversion timing.
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: event_bundle_sequence_id
+      description: 'Sequential ID for the bundle of events uploaded together.
+
+        Events are uploaded in batches; this tracks the upload bundle order.
+
+
+        Use for debugging data freshness and identifying event upload patterns.
+
+        '
+      meta:
+        semantic_type: identifier
+    - name: event_server_timestamp_offset
+      description: 'Offset in microseconds between when the event was logged on client vs. received by server.
+
+
+        Positive value: Event logged on client before received by server (typical)
+
+        Negative value: Clock skew or offline event later uploaded
+
+
+        Use to identify:
+
+        - Network latency issues
+
+        - Offline event collection
+
+        - Client-side timing problems
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: avg
+    - name: user_id
+      description: 'User ID set via setUserId() in GA4 or User-ID feature.
+
+        Represents authenticated user identifier (e.g., customer ID, email hash).
+
+
+        NULL for unauthenticated users or if User-ID not implemented.
+
+
+        Critical for Florret: Cross-device tracking for logged-in customers.
+
+        Join to Shopify customer data using this field if available.
+
+        '
+      meta:
+        semantic_type: identifier
+        is_primary_key: false
+    - name: user_pseudo_id
+      description: 'Cookie-based unique identifier for the user, set by GA4''s client ID.
+
+        Persists across sessions on the same browser/device.
+
+
+        Format: Typically a UUID-like string
+
+        Scope: Per-device, not per-user (same person on mobile + desktop = 2 pseudo IDs)
+
+
+        Use as primary user identifier when user_id is NULL.
+
+        For cross-device analysis, prefer user_id or join to Shopify via email.
+
+        '
+      meta:
+        semantic_type: identifier
+        is_primary_key: false
+    - name: privacy_info
+      description: 'RECORD containing privacy and consent signals.
+
+        Structure: STRUCT<analytics_storage STRING, ads_storage STRING, uses_transient_token STRING>
+
+
+        Fields:
+
+        - analytics_storage: "Yes"/"No" - User consented to analytics cookies
+
+        - ads_storage: "Yes"/"No" - User consented to advertising cookies
+
+        - uses_transient_token: Token-based measurement mode indicator
+
+
+        Use to filter for GDPR compliance or analyze consent impact on data quality.
+
+        '
+      meta:
+        semantic_type: nested_attributes
+        contains: privacy_consent_info
+    - name: user_properties
+      description: "ARRAY of user-scoped custom dimensions set via setUserProperties().\nStructure: ARRAY<STRUCT<key STRING, value RECORD>>\n\nCommon properties:\n- customer_type: New vs. returning customer\n- lifetime_value: User LTV\n- first_purchase_date: Date of first transaction\n- Custom audience segments\n\nQuery pattern:\n```sql\nSELECT\n  (SELECT value.string_value FROM UNNEST(user_properties) WHERE key = 'customer_type') AS customer_type\nFROM events_*\n```\n"
+      meta:
+        semantic_type: nested_attributes
+        contains: user_custom_dimensions
+    - name: user_first_touch_timestamp
+      description: 'Timestamp in microseconds when the user first visited the site (lifetime first touch).
+
+        Persists across all sessions for the user.
+
+
+        Use to calculate:
+
+        - User age/tenure: Days since first visit
+
+        - Time to conversion: Days from first visit to purchase
+
+        - New vs. returning visitor classification
+
+
+        Convert to datetime: TIMESTAMP_MICROS(user_first_touch_timestamp)
+
+        '
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: user_ltv
+      description: 'RECORD containing predicted and actual Lifetime Value metrics.
+
+        Structure: STRUCT<revenue FLOAT64, currency STRING>
+
+
+        Fields:
+
+        - revenue: Total revenue attributed to user (in original currency)
+
+        - currency: Currency code
+
+
+        Note: GA4''s LTV calculation may differ from Shopify''s actual customer LTV.
+
+        For Florret, prefer calculating LTV directly from Shopify order data.
+
+        '
+      meta:
+        semantic_type: nested_attributes
+        contains: lifetime_value_metrics
+    - name: device
+      description: "RECORD containing device information for the user's session.\nStructure: Multiple fields including category, mobile_brand_name, operating_system, browser, etc.\n\nKey fields:\n- device.category: \"desktop\", \"mobile\", \"tablet\"\n- device.mobile_brand_name: \"Apple\", \"Samsung\", etc.\n- device.mobile_model_name: \"iPhone 14\", \"Galaxy S23\", etc.\n- device.operating_system: \"iOS\", \"Android\", \"Windows\", \"Macintosh\"\n- device.operating_system_version: Version string\n- device.browser: \"Chrome\", \"Safari\", \"Firefox\", etc.\n- device.browser_version: Browser version\n- device.language: Browser language setting\n- device.is_limited_ad_tracking: Ad tracking restriction status\n- device.web_info.browser: Browser name (web only)\n- device.web_info.browser_version: Browser version (web only)\n- device.web_info.hostname: Website hostname\n\nUse for device segmentation, mobile vs. desktop analysis, browser compatibility tracking.\n\nQuery example:\n```sql\nSELECT\n\
+        \  device.category AS device_type,\n  device.operating_system AS os,\n  COUNT(*) AS sessions\nFROM events_*\nWHERE event_name = 'session_start'\nGROUP BY 1, 2\n```\n"
+      meta:
+        semantic_type: nested_attributes
+        contains: device_information
+    - name: geo
+      description: "RECORD containing geographic location of the user based on IP address.\n\nFields:\n- geo.continent: Continent name (e.g., \"Americas\", \"Europe\")\n- geo.sub_continent: Sub-continent (e.g., \"Northern America\")\n- geo.country: Country name (e.g., \"United States\")\n- geo.region: State/region (e.g., \"California\")\n- geo.metro: Metro area (e.g., \"San Francisco-Oakland-San Jose CA\")\n- geo.city: City name (e.g., \"San Francisco\")\n\nNote: Location is approximate based on IP. May be \"not set\" for VPN/privacy users.\n\nUse for:\n- Geographic performance analysis\n- Regional marketing effectiveness\n- Shipping cost correlation\n- Market expansion planning\n\nQuery example:\n```sql\nSELECT\n  geo.country,\n  geo.region,\n  COUNT(DISTINCT user_pseudo_id) AS users\nFROM events_*\nGROUP BY 1, 2\n```\n"
+      meta:
+        semantic_type: nested_attributes
+        contains: geographic_dimensions
+    - name: app_info
+      description: 'RECORD containing mobile app information (NULL for web traffic).
+
+
+        Fields:
+
+        - app_info.id: App bundle ID (e.g., com.florret.app)
+
+        - app_info.version: App version string
+
+        - app_info.install_store: "Apple App Store" or "Google Play Store"
+
+        - app_info.firebase_app_id: Firebase project ID
+
+
+        For Florret (web-only), this will typically be NULL.
+
+        '
+      meta:
+        semantic_type: nested_attributes
+        contains: mobile_app_info
+    - name: traffic_source
+      description: "RECORD containing attribution data for the user's first visit (acquisition source).\nThis is user-scoped, not session-scoped.\n\nFields:\n- traffic_source.name: Campaign name (utm_campaign)\n- traffic_source.medium: Marketing medium (utm_medium): \"organic\", \"cpc\", \"email\", \"referral\", etc.\n- traffic_source.source: Traffic source (utm_source): \"google\", \"facebook\", \"newsletter\", etc.\n\nUse for user acquisition analysis and first-touch attribution.\n\nFor session-level attribution, use session_traffic_source_last_click instead.\n\nQuery example:\n```sql\nSELECT\n  traffic_source.source,\n  traffic_source.medium,\n  COUNT(DISTINCT user_pseudo_id) AS new_users\nFROM events_*\nWHERE event_name = 'first_visit'\nGROUP BY 1, 2\n```\n"
+      meta:
+        semantic_type: nested_attributes
+        contains: acquisition_attribution
+    - name: stream_id
+      description: 'Unique identifier for the GA4 data stream (property).
+
+        Multiple streams can exist per property (e.g., web + iOS + Android).
+
+
+        Use to filter data when combining multiple streams or tracking stream-specific metrics.
+
+        '
+      meta:
+        semantic_type: identifier
+    - name: platform
+      description: 'Platform where the event was logged.
+
+
+        Values: "WEB", "IOS", "ANDROID"
+
+
+        For Florret (web-only e-commerce), expect "WEB" exclusively.
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: event_dimensions
+      description: 'RECORD containing deprecated event-scoped custom dimensions.
+
+        GA4 migrated to event_params; this field exists for backwards compatibility.
+
+
+        Prefer using event_params for custom dimensions in new queries.
+
+        '
+      meta:
+        semantic_type: nested_attributes
+        contains: legacy_custom_dimensions
+    - name: ecommerce
+      description: "RECORD containing e-commerce transaction data for purchase events.\nNULL for non-purchase events.\n\nStructure and key fields:\n- ecommerce.transaction_id: Unique order ID (join to Shopify order_name or order_id)\n- ecommerce.purchase_revenue: Total revenue (subtotal + tax + shipping)\n- ecommerce.purchase_revenue_in_usd: Revenue in USD (currency converted)\n- ecommerce.refund_value: Refund amount (for refund events)\n- ecommerce.refund_value_in_usd: Refund in USD\n- ecommerce.shipping_value: Shipping cost\n- ecommerce.tax_value: Tax amount\n- ecommerce.unique_items: Count of unique items in transaction\n- ecommerce.total_item_quantity: Total quantity of all items\n\nCritical for Florret:\n- Join to Shopify via transaction_id = order_name\n- Compare GA4 revenue to Shopify net sales for data quality checks\n- Use for marketing attribution and channel ROI analysis\n\nQuery example:\n```sql\nSELECT\n  ecommerce.transaction_id AS order_id,\n  ecommerce.purchase_revenue AS\
+        \ revenue,\n  ecommerce.total_item_quantity AS items\nFROM events_*\nWHERE event_name = 'purchase'\n```\n"
+      meta:
+        semantic_type: nested_attributes
+        contains: ecommerce_transaction_data
+    - name: items
+      description: "ARRAY of e-commerce items (products) associated with the event.\nPopulated for e-commerce events: purchase, add_to_cart, view_item, etc.\n\nStructure: ARRAY<STRUCT<item_id STRING, item_name STRING, ...>>\n\nKey fields per item:\n- item_id: Product SKU (join to Shopify variant_sku)\n- item_name: Product title\n- item_brand: Brand name\n- item_category: Primary category\n- item_category2, item_category3, item_category4, item_category5: Category hierarchy\n- item_variant: Variant name (e.g., color, size)\n- price: Unit price\n- quantity: Quantity purchased/added\n- item_revenue: Total revenue for this item (price × quantity)\n- coupon: Item-level coupon code\n- affiliation: Store or affiliation ID\n- location_id: Physical store location (if applicable)\n- index: Position in product list (for view_item_list events)\n- promotion_id: Promotion identifier\n- promotion_name: Promotion name\n\nCritical for Florret product analysis:\n- Sample vs. product identification: Check item_name\
+        \ for \"Cut\", \"Sample\", \"Plank\"\n- Product category extraction: Parse item_category or item_id (SKU)\n- Color conversion tracking: Track item_id from view_item → add_to_cart → purchase\n\nQuery pattern:\n```sql\nSELECT\n  event_name,\n  item.item_id AS sku,\n  item.item_name AS product_name,\n  item.quantity,\n  item.price\nFROM events_*,\nUNNEST(items) AS item\nWHERE event_name IN ('purchase', 'add_to_cart', 'view_item')\n```\n"
+      meta:
+        semantic_type: nested_attributes
+        contains: ecommerce_line_items
+    - name: collected_traffic_source
+      description: 'RECORD containing the traffic source data collected at event time (session-scoped).
+
+
+        Fields:
+
+        - collected_traffic_source.manual_campaign_id: Campaign ID (utm_id)
+
+        - collected_traffic_source.manual_campaign_name: Campaign name (utm_campaign)
+
+        - collected_traffic_source.manual_source: Source (utm_source)
+
+        - collected_traffic_source.manual_medium: Medium (utm_medium)
+
+        - collected_traffic_source.manual_term: Keyword (utm_term)
+
+        - collected_traffic_source.manual_content: Ad content (utm_content)
+
+        - collected_traffic_source.gclid: Google Click ID (for Google Ads attribution)
+
+        - collected_traffic_source.dclid: Display & Video 360 Click ID
+
+        - collected_traffic_source.srsltid: Google Merchant Center click ID
+
+
+        Use for session-level attribution and campaign performance analysis.
+
+        Complements session_traffic_source_last_click for multi-touch attribution.
+
+        '
+      meta:
+        semantic_type: nested_attributes
+        contains: session_attribution
+    - name: is_active_user
+      description: 'Boolean flag indicating if the user was active in the specified time period.
+
+
+        TRUE: User had an engaged session (engagement_time_msec > 0 or 2+ page views/events)
+
+        FALSE/NULL: User did not meet engagement criteria
+
+
+        Use to calculate active users metric and distinguish engaged vs. bounced sessions.
+
+        '
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: batch_event_index
+      description: 'Zero-based index of the event within the uploaded batch.
+
+        Events are uploaded in batches; this indicates position within that batch.
+
+
+        Use for debugging event ordering and batch processing issues.
+
+        '
+      meta:
+        semantic_type: measure
+        default_aggregation: max
+    - name: batch_page_id
+      description: 'Identifier for the page view that generated this batch of events.
+
+        Groups events that occurred during a single page session.
+
+
+        Use to group events by page view for engagement analysis.
+
+        '
+      meta:
+        semantic_type: identifier
+    - name: batch_ordering_id
+      description: 'Monotonically increasing ID for ordering event batches.
+
+        Ensures events are processed in the correct sequence.
+
+
+        Use for event ordering and deduplication logic.
+
+        '
+      meta:
+        semantic_type: identifier
+    - name: session_traffic_source_last_click
+      description: "RECORD containing last-click attribution for the current session.\nThis represents the most recent traffic source that initiated the session.\n\nFields:\n- session_traffic_source_last_click.manual_campaign_id: Campaign ID\n- session_traffic_source_last_click.manual_campaign_name: Campaign name\n- session_traffic_source_last_click.manual_source: Traffic source\n- session_traffic_source_last_click.manual_medium: Marketing medium\n- session_traffic_source_last_click.manual_term: Search keyword\n- session_traffic_source_last_click.manual_content: Ad content variant\n- session_traffic_source_last_click.gclid: Google Ads click ID\n- session_traffic_source_last_click.dclid: Display & Video 360 click ID\n- session_traffic_source_last_click.srsltid: Shopping ads click ID\n\nCritical for Florret marketing analysis:\n- Last-touch attribution before purchase\n- Channel performance and ROI\n- Campaign effectiveness\n\nUse this for conversion attribution (vs. traffic_source for acquisition\
+        \ attribution).\n\nQuery example:\n```sql\nSELECT\n  session_traffic_source_last_click.manual_source AS source,\n  session_traffic_source_last_click.manual_medium AS medium,\n  COUNT(DISTINCT CASE WHEN event_name = 'purchase' THEN user_pseudo_id END) AS converters\nFROM events_*\nGROUP BY 1, 2\n```\n"
+      meta:
+        semantic_type: nested_attributes
+        contains: last_click_attribution
+    - name: publisher
+      description: 'RECORD containing Google Ad Manager publisher information (for publisher sites).
+
+        NULL for non-publisher properties.
+
+
+        Fields:
+
+        - publisher.name: Publisher name
+
+        - publisher.id: Publisher ID
+
+
+        For Florret (e-commerce site, not a publisher), this will be NULL.
+
+        '
+      meta:
+        semantic_type: nested_attributes
+        contains: publisher_info

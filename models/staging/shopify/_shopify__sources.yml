@@ -1,0 +1,4438 @@
+version: 2
+sources:
+- name: ft_shopify_shopify
+  description: 'Fivetran-synced Shopify data from ft_shopify_shopify dataset. Contains both raw Shopify tables and Fivetran''s pre-built models (shopify_gql__*). Florret has TWO Shopify instances: regular (consumer) and commercial (trade). These are unioned in Fivetran with source_relation as the store identifier.'
+  tables:
+  - name: int_shopify_gql__collection
+    columns:
+    - name: collection_id
+      meta:
+        semantic_type: identifier
+    - name: is_deleted
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: rule_logic
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: handle
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: sort_order
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: title
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: updated_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: _fivetran_synced
+      description: Fivetran sync timestamp. Not used in Florret business logic.
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: source_relation
+      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        florret_usage: store_identifier
+        stores:
+          regular:
+            threshold: 55
+            salesperson: DTC
+          commercial:
+            threshold: 40
+            salesperson: Commercial
+    - name: unique_key
+      meta:
+        semantic_type: identifier
+    - name: rules
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+  - name: int_shopify_gql__customer
+    columns:
+    - name: customer_id
+      description: 'Shopify customer ID. Note: In Florret''s business logic, email (not customer_id) is the primary customer identifier because customer_id is NULL for guest checkouts. Use for joins to customer table, but use LOWER(email) for lifetime metrics.'
+      meta:
+        semantic_type: identifier
+        business_terms:
+        - customer
+        - user_id
+        florret_usage: secondary_identifier
+        use_instead: email for customer aggregations
+    - name: email
+      description: 'Customer email address. CRITICAL: This is Florret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+        florret_usage: primary_customer_identifier
+        preprocessing: LOWER(email)
+        exclusions:
+        - email NOT LIKE '%amazon%'
+        - email IS NOT NULL for customer analysis
+    - name: first_name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: last_name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: orders_count
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: phone
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: account_state
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: is_tax_exempt
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: total_spent
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: is_verified_email
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: note
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: currency
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: marketing_consent_state
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: marketing_opt_in_level
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: marketing_consent_updated_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: created_timestamp
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: updated_timestamp
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: _fivetran_synced
+      description: Fivetran sync timestamp. Not used in Florret business logic.
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: source_relation
+      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        florret_usage: store_identifier
+        stores:
+          regular:
+            threshold: 55
+            salesperson: DTC
+          commercial:
+            threshold: 40
+            salesperson: Commercial
+    - name: unique_key
+      meta:
+        semantic_type: identifier
+    - name: default_address_id
+      meta:
+        semantic_type: identifier
+    description: 'Fivetran intermediate table: int_shopify_gql__customer. Customer-related data. Use email as primary identifier.'
+  - name: int_shopify_gql__customer_email_rollup
+    columns:
+    - name: email
+      description: 'Customer email address. CRITICAL: This is Florret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+        florret_usage: primary_customer_identifier
+        preprocessing: LOWER(email)
+        exclusions:
+        - email NOT LIKE '%amazon%'
+        - email IS NOT NULL for customer analysis
+    - name: source_relation
+      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        florret_usage: store_identifier
+        stores:
+          regular:
+            threshold: 55
+            salesperson: DTC
+          commercial:
+            threshold: 40
+            salesperson: Commercial
+    - name: customer_ids
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer
+        - user_id
+    - name: phone_numbers
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: customer_tags
+      description: 'Customer tags from Shopify. Used to derive Customer Group and Customer Type. Customer Group: ''Retail'' (contains ''Retail''/''Guest'' or empty), ''Trade Rewards'' (contains ''Trade''/''Legacy TR''/''Partner Plus'', NOT ''Pending''), ''Pending Trade Rewards'' (contains ''Pending''). Customer Type: Extract using REGEXP_EXTRACT(tags, r''Customer Type: (.*?),''), default ''DTC''.'
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        florret_usage: customer_segmentation
+        extracts:
+        - customer_group
+        - customer_type
+    - name: first_account_created_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: last_account_created_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: last_updated_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: marketing_consent_updated_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: last_fivetran_synced
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: is_tax_exempt
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: is_verified_email
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: first_name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: last_name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: account_state
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: note
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: currency
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: marketing_consent_state
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: marketing_opt_in_level
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: unique_key
+      meta:
+        semantic_type: identifier
+    - name: default_address_id
+      meta:
+        semantic_type: identifier
+    description: 'Fivetran intermediate table: int_shopify_gql__customer_email_rollup. Customer-related data. Use email as primary identifier.'
+  - name: int_shopify_gql__order
+    columns:
+    - name: order_id
+      meta:
+        semantic_type: identifier
+    - name: user_id
+      meta:
+        semantic_type: identifier
+    - name: total_discounts_pres_amount
+      description: 'None. Used to calculate line_item_discount: total_discounts / COUNT(DISTINCT sku).'
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: total_discounts_pres_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: total_discounts_shop_amount
+      description: 'None. Used to calculate line_item_discount: total_discounts / COUNT(DISTINCT sku).'
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: total_discounts_shop_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: total_price_pres_amount
+      description: 'None. Used in Order Type classification: Product Order if total_price > $250 AND product_quantity > 0. The $250 threshold prevents sample orders with small product add-ons from being classified as Product Orders. See business_rules.md section 7.'
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - sales
+        - revenue
+        - gmv
+        - order_value
+        florret_usage: order_classification
+        threshold: 250
+    - name: total_price_pres_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        business_terms:
+        - sales
+        - revenue
+        - gmv
+        - order_value
+    - name: total_price_shop_amount
+      description: 'None. Used in Order Type classification: Product Order if total_price > $250 AND product_quantity > 0. The $250 threshold prevents sample orders with small product add-ons from being classified as Product Orders. See business_rules.md section 7.'
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - sales
+        - revenue
+        - gmv
+        - order_value
+        florret_usage: order_classification
+        threshold: 250
+    - name: total_price_shop_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        business_terms:
+        - sales
+        - revenue
+        - gmv
+        - order_value
+    - name: total_tax_pres_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: total_tax_pres_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: total_tax_shop_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: total_tax_shop_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: source_name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: subtotal_price_pres_amount
+      description: Order subtotal before tax. In Florret's business logic, this is 'net_sales' or 'sales' for revenue metrics. Used as the primary revenue field.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - sales
+        - revenue
+        - gmv
+        - order_value
+        - net_sales
+        florret_usage: revenue_metric
+    - name: subtotal_price_pres_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        business_terms:
+        - sales
+        - revenue
+        - gmv
+        - order_value
+    - name: subtotal_price_shop_amount
+      description: Order subtotal before tax. In Florret's business logic, this is 'net_sales' or 'sales' for revenue metrics. Used as the primary revenue field.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - sales
+        - revenue
+        - gmv
+        - order_value
+        - net_sales
+        florret_usage: revenue_metric
+    - name: subtotal_price_shop_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        business_terms:
+        - sales
+        - revenue
+        - gmv
+        - order_value
+    - name: has_taxes_included
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: total_weight
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: total_tip_received_pres_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: total_tip_received_pres_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: total_tip_received_shop_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: total_tip_received_shop_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: location_id
+      meta:
+        semantic_type: identifier
+    - name: name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: note
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: number
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: cancel_reason
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: created_timestamp
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: cancelled_timestamp
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: closed_timestamp
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: processed_timestamp
+      description: 'Shopify order processed timestamp in UTC. This is Florret''s CANONICAL order date field. Always convert to Pacific time: DATETIME(processed_timestamp, ''America/Los_Angeles''). Use this for all order date calculations, cohort analysis, and time-based metrics.'
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+        is_canonical_date: true
+        timezone_conversion: DATETIME(processed_timestamp, 'America/Los_Angeles')
+        florret_usage: canonical_order_date
+    - name: updated_timestamp
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: currency
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: customer_id
+      description: 'Shopify customer ID. Note: In Florret''s business logic, email (not customer_id) is the primary customer identifier because customer_id is NULL for guest checkouts. Use for joins to customer table, but use LOWER(email) for lifetime metrics.'
+      meta:
+        semantic_type: identifier
+        business_terms:
+        - customer
+        - user_id
+        florret_usage: secondary_identifier
+        use_instead: email for customer aggregations
+    - name: email
+      description: 'Customer email address. CRITICAL: This is Florret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+        florret_usage: primary_customer_identifier
+        preprocessing: LOWER(email)
+        exclusions:
+        - email NOT LIKE '%amazon%'
+        - email IS NOT NULL for customer analysis
+    - name: financial_status
+      description: Shopify financial status (paid, pending, refunded, voided, etc.).
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: fulfillment_status
+      description: Shopify fulfillment status (fulfilled, partial, unfulfilled, null).
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: billing_address_address_1
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: billing_address_address_2
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: billing_address_city
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: billing_address_company
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: billing_address_country
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: billing_address_country_code
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: billing_address_first_name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: billing_address_last_name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: billing_address_latitude
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: billing_address_longitude
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: billing_address_name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: billing_address_phone
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: billing_address_province
+      description: Shopify billing address state/province.
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: billing_address_province_code
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: billing_address_zip
+      description: Shopify billing address ZIP/postal code.
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: browser_ip
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: shipping_cost_pres_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: shipping_cost_pres_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: shipping_cost_shop_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: shipping_cost_shop_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: shipping_address_address_1
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: shipping_address_address_2
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: shipping_address_city
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: shipping_address_company
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: shipping_address_country
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: shipping_address_country_code
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: shipping_address_first_name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: shipping_address_last_name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: shipping_address_latitude
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: shipping_address_longitude
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: shipping_address_name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: shipping_address_phone
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: shipping_address_province
+      description: Shopify shipping address state/province.
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: shipping_address_province_code
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: shipping_address_zip
+      description: Shopify shipping address ZIP/postal code.
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: app_id
+      meta:
+        semantic_type: identifier
+    - name: customer_locale
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: order_status_url
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: presentment_currency
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: is_test_order
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: is_deleted
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: has_buyer_accepted_marketing
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: is_confirmed
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: _fivetran_synced
+      description: Fivetran sync timestamp. Not used in Florret business logic.
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: source_relation
+      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        florret_usage: store_identifier
+        stores:
+          regular:
+            threshold: 55
+            salesperson: DTC
+          commercial:
+            threshold: 40
+            salesperson: Commercial
+    - name: unique_key
+      meta:
+        semantic_type: identifier
+    - name: referring_site
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: landing_site_base_url
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    description: 'Fivetran intermediate table: int_shopify_gql__order. Order-related data. Use processed_timestamp as canonical date.'
+  - name: int_shopify_gql__orders_order_line_aggregates
+    columns:
+    - name: order_id
+      meta:
+        semantic_type: identifier
+    - name: source_relation
+      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        florret_usage: store_identifier
+        stores:
+          regular:
+            threshold: 55
+            salesperson: DTC
+          commercial:
+            threshold: 40
+            salesperson: Commercial
+    - name: line_item_count
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: order_total_quantity
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: order_total_tax
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: order_total_discount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: total_line_items_price_pres_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: total_line_items_price_shop_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: total_line_items_price_pres_currency_codes
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: total_line_items_price_shop_currency_codes
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: order_total_shipping
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: order_total_shipping_with_discounts
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: order_total_shipping_tax
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    description: 'Fivetran intermediate table: int_shopify_gql__orders_order_line_aggregates. Order-related data. Use processed_timestamp as canonical date.'
+  - name: int_shopify_gql__product_variant
+    columns:
+    - name: variant_id
+      meta:
+        semantic_type: identifier
+    - name: product_id
+      meta:
+        semantic_type: identifier
+    - name: inventory_item_id
+      meta:
+        semantic_type: identifier
+    - name: title
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: price
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - sales
+        - revenue
+        - gmv
+        - order_value
+    - name: sku
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: position
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: inventory_policy
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: compare_at_price
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: is_taxable
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: barcode
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: inventory_quantity
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: is_available_for_sale
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: display_name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: legacy_resource_id
+      meta:
+        semantic_type: identifier
+    - name: has_components_required
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: sellable_online_quantity
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: tax_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: created_timestamp
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: updated_timestamp
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: _fivetran_synced
+      description: Fivetran sync timestamp. Not used in Florret business logic.
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: source_relation
+      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        florret_usage: store_identifier
+        stores:
+          regular:
+            threshold: 55
+            salesperson: DTC
+          commercial:
+            threshold: 40
+            salesperson: Commercial
+    - name: unique_key
+      meta:
+        semantic_type: identifier
+    - name: weight
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: weight_unit
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+  - name: shopify__calendar
+    columns:
+    - name: date_day
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+  - name: shopify_gql__customer_cohorts
+    columns:
+    - name: date_month
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: customer_id
+      description: 'Shopify customer ID. Note: In Florret''s business logic, email (not customer_id) is the primary customer identifier because customer_id is NULL for guest checkouts. Use for joins to customer table, but use LOWER(email) for lifetime metrics.'
+      meta:
+        semantic_type: identifier
+        business_terms:
+        - customer
+        - user_id
+        florret_usage: secondary_identifier
+        use_instead: email for customer aggregations
+    - name: first_order_timestamp
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: cohort_month
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: source_relation
+      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        florret_usage: store_identifier
+        stores:
+          regular:
+            threshold: 55
+            salesperson: DTC
+          commercial:
+            threshold: 40
+            salesperson: Commercial
+    - name: order_count_in_month
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: total_price_in_month
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+        business_terms:
+        - sales
+        - revenue
+        - gmv
+        - order_value
+    - name: line_item_count_in_month
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: total_price_lifetime
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - sales
+        - revenue
+        - gmv
+        - order_value
+    - name: order_count_lifetime
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: line_item_count_lifetime
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: cohort_month_number
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: customer_cohort_id
+      meta:
+        semantic_type: identifier
+  - name: shopify_gql__customer_email_cohorts
+    columns:
+    - name: date_month
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: email
+      description: 'Customer email address. CRITICAL: This is Florret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+        florret_usage: primary_customer_identifier
+        preprocessing: LOWER(email)
+        exclusions:
+        - email NOT LIKE '%amazon%'
+        - email IS NOT NULL for customer analysis
+    - name: first_order_timestamp
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: cohort_month
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: source_relation
+      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        florret_usage: store_identifier
+        stores:
+          regular:
+            threshold: 55
+            salesperson: DTC
+          commercial:
+            threshold: 40
+            salesperson: Commercial
+    - name: order_count_in_month
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: total_price_in_month
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+        business_terms:
+        - sales
+        - revenue
+        - gmv
+        - order_value
+    - name: line_item_count_in_month
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: total_price_lifetime
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - sales
+        - revenue
+        - gmv
+        - order_value
+    - name: order_count_lifetime
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: line_item_count_lifetime
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: cohort_month_number
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: customer_cohort_id
+      meta:
+        semantic_type: identifier
+  - name: shopify_gql__customer_emails
+    columns:
+    - name: email
+      description: 'Customer email address. CRITICAL: This is Florret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+        florret_usage: primary_customer_identifier
+        preprocessing: LOWER(email)
+        exclusions:
+        - email NOT LIKE '%amazon%'
+        - email IS NOT NULL for customer analysis
+    - name: source_relation
+      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        florret_usage: store_identifier
+        stores:
+          regular:
+            threshold: 55
+            salesperson: DTC
+          commercial:
+            threshold: 40
+            salesperson: Commercial
+    - name: customer_ids
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer
+        - user_id
+    - name: phone_numbers
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: customer_tags
+      description: 'Customer tags from Shopify. Used to derive Customer Group and Customer Type. Customer Group: ''Retail'' (contains ''Retail''/''Guest'' or empty), ''Trade Rewards'' (contains ''Trade''/''Legacy TR''/''Partner Plus'', NOT ''Pending''), ''Pending Trade Rewards'' (contains ''Pending''). Customer Type: Extract using REGEXP_EXTRACT(tags, r''Customer Type: (.*?),''), default ''DTC''.'
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        florret_usage: customer_segmentation
+        extracts:
+        - customer_group
+        - customer_type
+    - name: first_account_created_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: last_account_created_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: last_updated_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: marketing_consent_updated_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: last_fivetran_synced
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: is_tax_exempt
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: is_verified_email
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: first_name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: last_name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: account_state
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: note
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: currency
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: marketing_consent_state
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: marketing_opt_in_level
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: default_address_id
+      meta:
+        semantic_type: identifier
+    - name: lifetime_abandoned_checkouts
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: first_order_timestamp
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: most_recent_order_timestamp
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: avg_order_value
+      meta:
+        semantic_type: measure
+        default_aggregation: avg
+    - name: lifetime_total_spent
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: lifetime_total_refunded
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: lifetime_total_net
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: lifetime_count_orders
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: avg_quantity_per_order
+      meta:
+        semantic_type: measure
+        default_aggregation: avg
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: lifetime_total_tax
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: avg_tax_per_order
+      meta:
+        semantic_type: measure
+        default_aggregation: avg
+    - name: lifetime_total_discount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: avg_discount_per_order
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: lifetime_total_shipping
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: avg_shipping_per_order
+      meta:
+        semantic_type: measure
+        default_aggregation: avg
+    - name: lifetime_total_shipping_with_discounts
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: avg_shipping_with_discounts_per_order
+      meta:
+        semantic_type: measure
+        default_aggregation: avg
+        unit: USD
+        format: currency
+    - name: lifetime_total_shipping_tax
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: avg_shipping_tax_per_order
+      meta:
+        semantic_type: measure
+        default_aggregation: avg
+  - name: shopify_gql__customers
+    columns:
+    - name: customer_id
+      description: 'Shopify customer ID. Note: In Florret''s business logic, email (not customer_id) is the primary customer identifier because customer_id is NULL for guest checkouts. Use for joins to customer table, but use LOWER(email) for lifetime metrics.'
+      meta:
+        semantic_type: identifier
+        business_terms:
+        - customer
+        - user_id
+        florret_usage: secondary_identifier
+        use_instead: email for customer aggregations
+    - name: email
+      description: 'Customer email address. CRITICAL: This is Florret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+        florret_usage: primary_customer_identifier
+        preprocessing: LOWER(email)
+        exclusions:
+        - email NOT LIKE '%amazon%'
+        - email IS NOT NULL for customer analysis
+    - name: first_name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: last_name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: phone
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: account_state
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: is_tax_exempt
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: is_verified_email
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: note
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: currency
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: marketing_consent_state
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: marketing_opt_in_level
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: marketing_consent_updated_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: created_timestamp
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: updated_timestamp
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: _fivetran_synced
+      description: Fivetran sync timestamp. Not used in Florret business logic.
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: source_relation
+      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        florret_usage: store_identifier
+        stores:
+          regular:
+            threshold: 55
+            salesperson: DTC
+          commercial:
+            threshold: 40
+            salesperson: Commercial
+    - name: default_address_id
+      meta:
+        semantic_type: identifier
+    - name: lifetime_abandoned_checkouts
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: first_order_timestamp
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: most_recent_order_timestamp
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: customer_tags
+      description: 'Customer tags from Shopify. Used to derive Customer Group and Customer Type. Customer Group: ''Retail'' (contains ''Retail''/''Guest'' or empty), ''Trade Rewards'' (contains ''Trade''/''Legacy TR''/''Partner Plus'', NOT ''Pending''), ''Pending Trade Rewards'' (contains ''Pending''). Customer Type: Extract using REGEXP_EXTRACT(tags, r''Customer Type: (.*?),''), default ''DTC''.'
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        florret_usage: customer_segmentation
+        extracts:
+        - customer_group
+        - customer_type
+    - name: avg_order_value
+      meta:
+        semantic_type: measure
+        default_aggregation: avg
+    - name: lifetime_total_spent
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: lifetime_total_refunded
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: lifetime_total_net
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: lifetime_count_orders
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: avg_quantity_per_order
+      meta:
+        semantic_type: measure
+        default_aggregation: avg
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: lifetime_total_tax
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: avg_tax_per_order
+      meta:
+        semantic_type: measure
+        default_aggregation: avg
+    - name: lifetime_total_discount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: avg_discount_per_order
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: lifetime_total_shipping
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: avg_shipping_per_order
+      meta:
+        semantic_type: measure
+        default_aggregation: avg
+    - name: lifetime_total_shipping_with_discounts
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: avg_shipping_with_discounts_per_order
+      meta:
+        semantic_type: measure
+        default_aggregation: avg
+        unit: USD
+        format: currency
+    - name: lifetime_total_shipping_tax
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: avg_shipping_tax_per_order
+      meta:
+        semantic_type: measure
+        default_aggregation: avg
+    description: Shopify customers with lifetime metrics. Use email (lowercased) as primary identifier, not customer_id. Extract Customer Group and Customer Type from customer_tags.
+    meta:
+      primary_key: email (lowercased)
+      florret_usage: customer_analysis
+  - name: shopify_gql__daily_shop
+    columns:
+    - name: date_day
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: shop_id
+      meta:
+        semantic_type: identifier
+    - name: name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: domain
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: is_deleted
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: currency
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: enabled_presentment_currencies
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: iana_timezone
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: created_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: source_relation
+      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        florret_usage: store_identifier
+        stores:
+          regular:
+            threshold: 55
+            salesperson: DTC
+          commercial:
+            threshold: 40
+            salesperson: Commercial
+    - name: count_orders
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_line_items
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: avg_line_item_count
+      meta:
+        semantic_type: measure
+        default_aggregation: avg
+        unit: quantity
+    - name: count_customers
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_customer_emails
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - customer_email
+        - user_email
+    - name: order_adjusted_total
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: avg_order_value
+      meta:
+        semantic_type: measure
+        default_aggregation: avg
+    - name: shipping_cost
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: order_adjustment_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: order_adjustment_tax_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: refund_subtotal
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: refund_total_tax
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: total_discounts
+      description: 'None. Used to calculate line_item_discount: total_discounts / COUNT(DISTINCT sku).'
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: avg_discount
+      meta:
+        semantic_type: measure
+        default_aggregation: avg
+        unit: USD
+        format: currency
+    - name: shipping_discount_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - discounts
+        - savings
+        - coupon_value
+    - name: avg_shipping_discount_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - discounts
+        - savings
+        - coupon_value
+    - name: percentage_calc_discount_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - discounts
+        - savings
+        - coupon_value
+    - name: avg_percentage_calc_discount_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - discounts
+        - savings
+        - coupon_value
+    - name: fixed_amount_discount_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - discounts
+        - savings
+        - coupon_value
+    - name: avg_fixed_amount_discount_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - discounts
+        - savings
+        - coupon_value
+    - name: count_discount_codes_applied
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: count_locations_ordered_from
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_orders_with_discounts
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: count_orders_with_refunds
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: first_order_timestamp
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: last_order_timestamp
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: quantity_sold
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: quantity_refunded
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: quantity_net
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: avg_quantity_sold
+      meta:
+        semantic_type: measure
+        default_aggregation: avg
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: avg_quantity_net
+      meta:
+        semantic_type: measure
+        default_aggregation: avg
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: count_variants_sold
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_products_sold
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: quantity_gift_cards_sold
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: quantity_requiring_shipping
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: count_abandoned_checkouts
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_customers_abandoned_checkout
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_customer_emails_abandoned_checkout
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - customer_email
+        - user_email
+  - name: shopify_gql__discounts
+    columns:
+    - name: source_relation
+      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        florret_usage: store_identifier
+        stores:
+          regular:
+            threshold: 55
+            salesperson: DTC
+          commercial:
+            threshold: 40
+            salesperson: Commercial
+    - name: discount_code_id
+      meta:
+        semantic_type: identifier
+    - name: discount_type
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: applies_once_per_customer
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: usage_count
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: codes_count
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: codes_precision
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: combines_with_order_discounts
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: combines_with_product_discounts
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: combines_with_shipping_discounts
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: created_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: customer_selection_all_customers
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: ends_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: starts_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: status
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: title
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: total_sales_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: total_sales_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: updated_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: usage_limit
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: allocation_method
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: target_selection
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: target_type
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: value_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: value_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: value_percentage
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: percentage
+    - name: value_type
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: unique_key
+      meta:
+        semantic_type: identifier
+    - name: count_orders
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: avg_order_discount_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - discounts
+        - savings
+        - coupon_value
+    - name: total_order_discount_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - discounts
+        - savings
+        - coupon_value
+    - name: total_order_line_items_price
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: total_order_shipping_cost
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: total_order_refund_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: count_customers
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_customer_emails
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - customer_email
+        - user_email
+    - name: total_abandoned_checkout_discount_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - discounts
+        - savings
+        - coupon_value
+    - name: count_abandoned_checkouts
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_abandoned_checkout_customers
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_abandoned_checkout_customer_emails
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - customer_email
+        - user_email
+  - name: shopify_gql__inventory_levels
+    columns:
+    - name: inventory_level_id
+      meta:
+        semantic_type: identifier
+    - name: inventory_item_id
+      meta:
+        semantic_type: identifier
+    - name: location_id
+      meta:
+        semantic_type: identifier
+    - name: can_deactivate
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: deactivation_alert
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: created_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: updated_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: _fivetran_synced
+      description: Fivetran sync timestamp. Not used in Florret business logic.
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: source_relation
+      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        florret_usage: store_identifier
+        stores:
+          regular:
+            threshold: 55
+            salesperson: DTC
+          commercial:
+            threshold: 40
+            salesperson: Commercial
+    - name: sku
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: is_inventory_item_deleted
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: unit_cost_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: unit_cost_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: country_code_of_origin
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: province_code_of_origin
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: is_shipping_required
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: is_inventory_quantity_tracked
+      meta:
+        semantic_type: dimension
+        cardinality: low
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: inventory_item_created_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: inventory_item_updated_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: duplicate_sku_count
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: harmonized_system_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: inventory_history_url
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: legacy_resource_id
+      meta:
+        semantic_type: identifier
+    - name: measurement_id
+      meta:
+        semantic_type: identifier
+    - name: measurement_weight_value
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: measurement_weight_unit
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: is_tracked_editable_locked
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: tracked_editable_reason
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: location_name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: is_location_deleted
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: is_location_active
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: address_1
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: address_2
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: city
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: country
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: country_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: country_name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: is_legacy_location
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: province
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: province_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: phone
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: zip
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: location_created_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: location_updated_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: variant_id
+      meta:
+        semantic_type: identifier
+    - name: product_id
+      meta:
+        semantic_type: identifier
+    - name: variant_title
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: variant_inventory_policy
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: variant_price
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: variant_media_id
+      meta:
+        semantic_type: identifier
+    - name: is_variant_taxable
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: variant_barcode
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: variant_inventory_quantity
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: variant_tax_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: variant_created_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: variant_updated_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: variant_is_available_for_sale
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: variant_display_name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: variant_legacy_resource_id
+      meta:
+        semantic_type: identifier
+    - name: variant_has_components_required
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: variant_sellable_online_quantity
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: subtotal_sold
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: quantity_sold
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: count_distinct_orders
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_distinct_customers
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_distinct_customer_emails
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - customer_email
+        - user_email
+    - name: first_order_timestamp
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: last_order_timestamp
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: subtotal_sold_refunds
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: quantity_sold_refunds
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: count_fulfillment_pending
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_fulfillment_open
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_fulfillment_success
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_fulfillment_cancelled
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_fulfillment_error
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: count_fulfillment_failure
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: incoming_quantity
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: on_hand_quantity
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: available_quantity
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: committed_quantity
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: reserved_quantity
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: damaged_quantity
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: safety_stock_quantity
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: quality_control_quantity
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: net_subtotal_sold
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: net_quantity_sold
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+  - name: shopify_gql__line_item_enhanced
+    columns:
+    - name: header_id
+      meta:
+        semantic_type: identifier
+    - name: line_item_id
+      meta:
+        semantic_type: identifier
+    - name: line_item_index
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: record_type
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: created_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: currency
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: header_status
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: product_id
+      meta:
+        semantic_type: identifier
+    - name: product_name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: transaction_type
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: billing_type
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: product_type
+      description: 'Shopify product type. Used in Florret''s product category derivation: if product_type = ''lvp'', apply special SKU pattern logic to extract category. See business_rules.md section 3.'
+      meta:
+        semantic_type: dimension
+        cardinality: low
+        florret_usage: product_categorization
+    - name: quantity
+      description: Line item quantity. After classification, split into sample_quantity, product_quantity, accessories_quantity for aggregation to order level. These aggregates determine order type and customer status.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+        florret_usage: quantity_breakdowns
+    - name: unit_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: discount_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - discounts
+        - savings
+        - coupon_value
+    - name: tax_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: total_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: payment_id
+      meta:
+        semantic_type: identifier
+    - name: payment_method_id
+      meta:
+        semantic_type: identifier
+    - name: payment_method
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: payment_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: fee_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: refund_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: subscription_id
+      meta:
+        semantic_type: identifier
+    - name: subscription_plan
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: subscription_period_started_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: subscription_period_ended_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: subscription_status
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: customer_id
+      description: 'Shopify customer ID. Note: In Florret''s business logic, email (not customer_id) is the primary customer identifier because customer_id is NULL for guest checkouts. Use for joins to customer table, but use LOWER(email) for lifetime metrics.'
+      meta:
+        semantic_type: identifier
+        business_terms:
+        - customer
+        - user_id
+        florret_usage: secondary_identifier
+        use_instead: email for customer aggregations
+    - name: customer_created_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: customer_level
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: customer_name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: customer_company
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: customer_email
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: customer_city
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: customer_country
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: source_relation
+      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        florret_usage: store_identifier
+        stores:
+          regular:
+            threshold: 55
+            salesperson: DTC
+          commercial:
+            threshold: 40
+            salesperson: Commercial
+  - name: shopify_gql__order_lines
+    columns:
+    - name: order_line_id
+      meta:
+        semantic_type: identifier
+    - name: index
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: order_id
+      meta:
+        semantic_type: identifier
+    - name: fulfillment_status
+      description: Shopify fulfillment status (fulfilled, partial, unfulfilled, null).
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: is_gift_card
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: price_pres_amount
+      description: 'None. Used in Product classification: Product if price > $55 (regular Shopify) or > $40 (commercial Shopify), AND title NOT contains ''Nosing'', AND not a Sample. See business_rules.md section 1.'
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        florret_usage: product_classification
+        thresholds:
+          regular_shopify: 55
+          commercial_shopify: 40
+    - name: price_pres_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: price_shop_amount
+      description: 'None. Used in Product classification: Product if price > $55 (regular Shopify) or > $40 (commercial Shopify), AND title NOT contains ''Nosing'', AND not a Sample. See business_rules.md section 1.'
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        florret_usage: product_classification
+        thresholds:
+          regular_shopify: 55
+          commercial_shopify: 40
+    - name: price_shop_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: product_id
+      meta:
+        semantic_type: identifier
+    - name: quantity
+      description: Line item quantity. After classification, split into sample_quantity, product_quantity, accessories_quantity for aggregation to order level. These aggregates determine order type and customer status.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+        florret_usage: quantity_breakdowns
+    - name: is_shipping_required
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: sku
+      description: 'Product SKU. Used in line item classification (Sample if contains ''CUT''/''FULL'') and product category derivation. Complex SKU pattern matching extracts B/C/S codes and maps to product lines: Base, Signature, Craftsman, Silvan Hardwood. See business_rules.md sections 1-3.'
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        florret_usage: classification_and_categorization
+        patterns:
+        - 'sample_detection: CUT/FULL'
+        - 'category: B/C/S extraction'
+    - name: is_taxable
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: title
+      description: 'Line item product title. CRITICAL for Florret''s three-way line item classification: Sample (contains ''Cut''/''Sample''/''Plank''), Product (price > threshold, NOT ''Nosing'', not Sample), Accessories (everything else). Also used for color extraction: REGEXP_EXTRACT(title, r''^(.+?)\s''). See business_rules.md sections 1-2, 10.'
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        florret_usage: line_item_classification
+        classification_logic:
+        - sample_detection
+        - product_exclusion
+        - color_extraction
+    - name: total_discount_pres_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: total_discount_pres_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: total_discount_shop_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: total_discount_shop_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: variant_id
+      meta:
+        semantic_type: identifier
+    - name: variant_title
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: vendor
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: _fivetran_synced
+      description: Fivetran sync timestamp. Not used in Florret business logic.
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: source_relation
+      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        florret_usage: store_identifier
+        stores:
+          regular:
+            threshold: 55
+            salesperson: DTC
+          commercial:
+            threshold: 40
+            salesperson: Commercial
+    - name: unique_key
+      meta:
+        semantic_type: identifier
+    - name: pre_tax_price
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: order_line_tax
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: fulfillable_quantity
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: weight_unit
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: weight_value
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: restock_types
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: refunded_quantity
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: refunded_subtotal
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: quantity_net_refunds
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: subtotal_net_refunds
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: variant_created_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: variant_updated_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: inventory_item_id
+      meta:
+        semantic_type: identifier
+    - name: media_id
+      meta:
+        semantic_type: identifier
+    - name: variant_price
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: variant_sku
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: variant_position
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: variant_inventory_policy
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: variant_compare_at_price
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: variant_is_taxable
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: variant_barcode
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: variant_inventory_quantity
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: variant_weight
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: variant_weight_unit
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: variant_tax_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: variant_is_available_for_sale
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: variant_display_name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: variant_legacy_resource_id
+      meta:
+        semantic_type: identifier
+    - name: variant_has_components_required
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: variant_sellable_online_quantity
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    description: 'Shopify order line items with product/variant details. CRITICAL for Florret''s three-way classification: Sample, Product, Accessories. Apply classification logic early in staging layer using title, sku, and price fields.'
+    meta:
+      florret_usage: line_item_classification
+      classification_fields:
+      - title
+      - sku
+      - price
+  - name: shopify_gql__orders
+    columns:
+    - name: order_id
+      meta:
+        semantic_type: identifier
+    - name: user_id
+      meta:
+        semantic_type: identifier
+    - name: total_discounts_pres_amount
+      description: 'None. Used to calculate line_item_discount: total_discounts / COUNT(DISTINCT sku).'
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: total_discounts_pres_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: total_discounts_shop_amount
+      description: 'None. Used to calculate line_item_discount: total_discounts / COUNT(DISTINCT sku).'
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: total_discounts_shop_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: total_price_pres_amount
+      description: 'None. Used in Order Type classification: Product Order if total_price > $250 AND product_quantity > 0. The $250 threshold prevents sample orders with small product add-ons from being classified as Product Orders. See business_rules.md section 7.'
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - sales
+        - revenue
+        - gmv
+        - order_value
+        florret_usage: order_classification
+        threshold: 250
+    - name: total_price_pres_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        business_terms:
+        - sales
+        - revenue
+        - gmv
+        - order_value
+    - name: total_price_shop_amount
+      description: 'None. Used in Order Type classification: Product Order if total_price > $250 AND product_quantity > 0. The $250 threshold prevents sample orders with small product add-ons from being classified as Product Orders. See business_rules.md section 7.'
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - sales
+        - revenue
+        - gmv
+        - order_value
+        florret_usage: order_classification
+        threshold: 250
+    - name: total_price_shop_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        business_terms:
+        - sales
+        - revenue
+        - gmv
+        - order_value
+    - name: total_tax_pres_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: total_tax_pres_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: total_tax_shop_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: total_tax_shop_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: source_name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: subtotal_price_pres_amount
+      description: Order subtotal before tax. In Florret's business logic, this is 'net_sales' or 'sales' for revenue metrics. Used as the primary revenue field.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - sales
+        - revenue
+        - gmv
+        - order_value
+        - net_sales
+        florret_usage: revenue_metric
+    - name: subtotal_price_pres_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        business_terms:
+        - sales
+        - revenue
+        - gmv
+        - order_value
+    - name: subtotal_price_shop_amount
+      description: Order subtotal before tax. In Florret's business logic, this is 'net_sales' or 'sales' for revenue metrics. Used as the primary revenue field.
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - sales
+        - revenue
+        - gmv
+        - order_value
+        - net_sales
+        florret_usage: revenue_metric
+    - name: subtotal_price_shop_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        business_terms:
+        - sales
+        - revenue
+        - gmv
+        - order_value
+    - name: has_taxes_included
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: total_weight
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: total_tip_received_pres_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: total_tip_received_pres_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: total_tip_received_shop_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: total_tip_received_shop_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: location_id
+      meta:
+        semantic_type: identifier
+    - name: name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: note
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: number
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: cancel_reason
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: created_timestamp
+      description: 'Shopify order creation timestamp in UTC. IMPORTANT: This is NOT the canonical order date field for Florret. Use processed_timestamp instead, which represents when the order was actually processed. Convert to Pacific time: DATETIME(processed_timestamp, ''America/Los_Angeles'').'
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+        is_canonical_date: false
+        use_instead: processed_timestamp
+    - name: cancelled_timestamp
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: closed_timestamp
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: processed_timestamp
+      description: 'Shopify order processed timestamp in UTC. This is Florret''s CANONICAL order date field. Always convert to Pacific time: DATETIME(processed_timestamp, ''America/Los_Angeles''). Use this for all order date calculations, cohort analysis, and time-based metrics.'
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+        is_canonical_date: true
+        timezone_conversion: DATETIME(processed_timestamp, 'America/Los_Angeles')
+        florret_usage: canonical_order_date
+    - name: updated_timestamp
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: currency
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: customer_id
+      description: 'Shopify customer ID. Note: In Florret''s business logic, email (not customer_id) is the primary customer identifier because customer_id is NULL for guest checkouts. Use for joins to customer table, but use LOWER(email) for lifetime metrics.'
+      meta:
+        semantic_type: identifier
+        business_terms:
+        - customer
+        - user_id
+        florret_usage: secondary_identifier
+        use_instead: email for customer aggregations
+    - name: email
+      description: 'Customer email address. CRITICAL: This is Florret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+        florret_usage: primary_customer_identifier
+        preprocessing: LOWER(email)
+        exclusions:
+        - email NOT LIKE '%amazon%'
+        - email IS NOT NULL for customer analysis
+    - name: financial_status
+      description: Shopify financial status (paid, pending, refunded, voided, etc.).
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: fulfillment_status
+      description: Shopify fulfillment status (fulfilled, partial, unfulfilled, null).
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: billing_address_address_1
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: billing_address_address_2
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: billing_address_city
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: billing_address_company
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: billing_address_country
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: billing_address_country_code
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: billing_address_first_name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: billing_address_last_name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: billing_address_latitude
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: billing_address_longitude
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: billing_address_name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: billing_address_phone
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: billing_address_province
+      description: Shopify billing address state/province.
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: billing_address_province_code
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: billing_address_zip
+      description: Shopify billing address ZIP/postal code.
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: browser_ip
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: shipping_cost_pres_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: shipping_cost_pres_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: shipping_cost_shop_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: shipping_cost_shop_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: shipping_address_address_1
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: shipping_address_address_2
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: shipping_address_city
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: shipping_address_company
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: shipping_address_country
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: shipping_address_country_code
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: shipping_address_first_name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: shipping_address_last_name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: shipping_address_latitude
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: shipping_address_longitude
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: shipping_address_name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: shipping_address_phone
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: shipping_address_province
+      description: Shopify shipping address state/province.
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: shipping_address_province_code
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: shipping_address_zip
+      description: Shopify shipping address ZIP/postal code.
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: app_id
+      meta:
+        semantic_type: identifier
+    - name: customer_locale
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: order_status_url
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: presentment_currency
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: is_test_order
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: is_deleted
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: has_buyer_accepted_marketing
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: is_confirmed
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: _fivetran_synced
+      description: Fivetran sync timestamp. Not used in Florret business logic.
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: source_relation
+      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        florret_usage: store_identifier
+        stores:
+          regular:
+            threshold: 55
+            salesperson: DTC
+          commercial:
+            threshold: 40
+            salesperson: Commercial
+    - name: unique_key
+      meta:
+        semantic_type: identifier
+    - name: referring_site
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: landing_site_base_url
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: order_adjustment_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: order_adjustment_tax_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: refund_subtotal
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: refund_total_tax
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: order_adjusted_total
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: line_item_count
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: total_line_items_price_pres_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: total_line_items_price_shop_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: total_line_items_price_pres_currency_codes
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: total_line_items_price_shop_currency_codes
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: shipping_discount_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - discounts
+        - savings
+        - coupon_value
+    - name: percentage_calc_discount_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - discounts
+        - savings
+        - coupon_value
+    - name: fixed_amount_discount_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+        business_terms:
+        - discounts
+        - savings
+        - coupon_value
+    - name: count_discount_codes_applied
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: order_total_shipping_tax
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: order_tags
+      description: 'Order tags from Shopify. Used to extract Salesperson. Extract using REGEXP_EXTRACT(tags, r''Salesperson: (.*?),''). Default: ''DTC'' for regular Shopify, ''Commercial'' for commercial Shopify.'
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        florret_usage: salesperson_extraction
+        regex_pattern: 'Salesperson: (.*?),'
+        defaults:
+          regular_shopify: DTC
+          commercial_shopify: Commercial
+    - name: number_of_fulfillments
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: fulfillment_services
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: tracking_companies
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: tracking_numbers
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: customer_order_seq_number
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: new_vs_repeat
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    description: Shopify orders with Fivetran transformations. Core table for Florret's order analysis. Use processed_timestamp (not created_timestamp) as canonical date. Join to order_lines to get line item details for classification.
+    meta:
+      canonical_date_field: processed_timestamp
+      florret_usage: order_analysis
+  - name: shopify_gql__products
+    columns:
+    - name: product_id
+      meta:
+        semantic_type: identifier
+    - name: handle
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: product_type
+      description: 'Shopify product type. Used in Florret''s product category derivation: if product_type = ''lvp'', apply special SKU pattern logic to extract category. See business_rules.md section 3.'
+      meta:
+        semantic_type: dimension
+        cardinality: low
+        florret_usage: product_categorization
+    - name: title
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: vendor
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: status
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: is_deleted
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: created_timestamp
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: updated_timestamp
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: published_timestamp
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: _fivetran_synced
+      description: Fivetran sync timestamp. Not used in Florret business logic.
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: source_relation
+      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        florret_usage: store_identifier
+        stores:
+          regular:
+            threshold: 55
+            salesperson: DTC
+          commercial:
+            threshold: 40
+            salesperson: Commercial
+    - name: unique_key
+      meta:
+        semantic_type: identifier
+    - name: collections
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: tags
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: count_variants
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: has_product_media
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: total_quantity_sold
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: subtotal_sold
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: quantity_sold_net_refunds
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: subtotal_sold_net_refunds
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: first_order_timestamp
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: most_recent_order_timestamp
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: avg_quantity_per_order_line
+      meta:
+        semantic_type: measure
+        default_aggregation: avg
+        unit: quantity
+        business_terms:
+        - qty
+        - volume
+        - units
+    - name: product_total_discount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: product_avg_discount_per_order_line
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: product_total_tax
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: product_avg_tax_per_order_line
+      meta:
+        semantic_type: measure
+        default_aggregation: avg
+  - name: shopify_gql__transactions
+    columns:
+    - name: transaction_id
+      meta:
+        semantic_type: identifier
+    - name: order_id
+      meta:
+        semantic_type: identifier
+    - name: refund_id
+      meta:
+        semantic_type: identifier
+    - name: amount_pres
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: amount_shop
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: device_id
+      meta:
+        semantic_type: identifier
+    - name: gateway
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: amount_pres_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: amount_shop_currency_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: parent_id
+      meta:
+        semantic_type: identifier
+    - name: payment_avs_result_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: payment_credit_card_bin
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: payment_cvv_result_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: payment_credit_card_number
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: payment_credit_card_company
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: kind
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: receipt
+      meta:
+        semantic_type: unknown
+    - name: currency_exchange_id
+      meta:
+        semantic_type: identifier
+    - name: currency_exchange_adjustment
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: currency_exchange_original_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: currency_exchange_final_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: currency_exchange_currency
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: error_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: status
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: user_id
+      meta:
+        semantic_type: identifier
+    - name: authorization_code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: created_timestamp
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: processed_timestamp
+      description: 'Shopify order processed timestamp in UTC. This is Florret''s CANONICAL order date field. Always convert to Pacific time: DATETIME(processed_timestamp, ''America/Los_Angeles''). Use this for all order date calculations, cohort analysis, and time-based metrics.'
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+        is_canonical_date: true
+        timezone_conversion: DATETIME(processed_timestamp, 'America/Los_Angeles')
+        florret_usage: canonical_order_date
+    - name: authorization_expires_at
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: _fivetran_synced
+      description: Fivetran sync timestamp. Not used in Florret business logic.
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: source_relation
+      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+        florret_usage: store_identifier
+        stores:
+          regular:
+            threshold: 55
+            salesperson: DTC
+          commercial:
+            threshold: 40
+            salesperson: Commercial
+    - name: unique_key
+      meta:
+        semantic_type: identifier
+    - name: payment_method
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: parent_created_timestamp
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: parent_kind
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: parent_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: parent_status
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: location_id
+      meta:
+        semantic_type: identifier
+    - name: source_name
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: exchange_rate
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: percentage
+    - name: currency_exchange_calculated_amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+  meta:
+    platform: Shopify
+    connector: Fivetran
+    florret_stores: 2
+    primary_customer_id: email (lowercased)
+    canonical_date: processed_timestamp
+    timezone: America/Los_Angeles
+    business_rules: See business_rules.md for line item classification, product categories, and conversion metrics

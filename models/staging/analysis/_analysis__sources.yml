@@ -1,0 +1,275 @@
+version: 2
+sources:
+- name: analysis
+  description: 'Custom analysis tables created by analysts or legacy dbt models. These tables contain Florret-specific business logic and derived metrics. IMPORTANT: These are analyst-created tables that implement Florret''s sample-to-purchase funnel logic.
+
+    '
+  tables:
+  - name: flooret_funnel
+    description: 'Customer-level funnel analysis tracking sample orders to product purchases. Core table for conversion analysis showing first sample order date, first product order date, and conversion metrics within time windows (15d, 30d, 60d, 120d). Includes product line breakouts (Base, Signature, Craftsman, Silvan) for sample and product orders.
+
+      '
+    columns:
+    - name: customer_id
+      description: Unique customer identifier
+      meta:
+        semantic_type: identifier
+        business_terms:
+        - customer
+        - user_id
+    - name: first_sample_order_date
+      description: Date of customer's first sample-only order (any sample type)
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: first_cut_order_date
+      description: Date of customer's first order containing cut samples
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: first_plank_order_date
+      description: Date of customer's first order containing plank samples
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: first_product_order_date
+      description: Date of customer's first product purchase (>$250 net sales, product qty > 0)
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: days_to_order
+      description: Days from first sample order to first product order (null if no conversion)
+      meta:
+        semantic_type: measure
+        default_aggregation: avg
+    - name: product_order_count_sixty_days
+      description: Number of product orders within 60 days of first sample order
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: sample_order_type
+      description: Classification of sample order (Base, Signature, Craftsman, Silvan, Mixed)
+      meta:
+        semantic_type: dimension
+        cardinality: low
+  - name: flooret_lineitem_sales_cleaned
+    description: 'Order line items with Florret''s classification logic applied. Each line item classified as Sample, Product, or Accessory based on price thresholds and SKU patterns. Includes customer funnel dates joined from flooret_funnel table.
+
+      '
+    columns:
+    - name: order_id
+      description: Unique order identifier
+      meta:
+        semantic_type: identifier
+    - name: order_line_item_id
+      description: Unique line item identifier
+      meta:
+        semantic_type: identifier
+    - name: product_id
+      description: Product identifier
+      meta:
+        semantic_type: identifier
+    - name: email
+      description: Customer email (primary customer identifier for funnel analysis)
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: order_date
+      description: Order date in Pacific timezone
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: quantity
+      description: Quantity ordered
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: sample_vs_product_text
+      description: Line item classification (Sample, Product, Accessory)
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: primary_product_category
+      description: Product line (Base, Signature, Craftsman, Silvan Hardwood, Iona, Other)
+      meta:
+        semantic_type: dimension
+        cardinality: low
+        business_terms:
+        - category
+        - product_line
+    - name: sample_quantity
+      description: Quantity if item is a sample, else 0
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: product_quantity
+      description: Quantity if item is a product, else 0
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: accessories_quantity
+      description: Quantity if item is an accessory, else 0
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: price
+      description: Line item price
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: first_sample_order_date
+      description: Customer's first sample order date (joined from funnel)
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: first_product_order_date
+      description: Customer's first product order date (joined from funnel)
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - day
+        - week
+        - month
+        - quarter
+        - year
+  - name: flooret_order_only
+    description: 'Order-level aggregation with line items rolled up. Shows order type (product order, sample order, accessory order) and customer status (new vs returning). Includes product line breakouts for both samples and products at order level.
+
+      '
+    columns:
+    - name: order_id
+      description: Unique order identifier
+      meta:
+        semantic_type: identifier
+    - name: customer_id
+      description: Customer identifier
+      meta:
+        semantic_type: identifier
+        business_terms:
+        - customer
+        - user_id
+    - name: email
+      description: Customer email
+      meta:
+        semantic_type: dimension
+        cardinality: high
+        business_terms:
+        - customer_email
+        - user_email
+    - name: order_date
+      description: Order date in Pacific timezone
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: sample_quantity
+      description: Total sample quantity in order
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: product_quantity
+      description: Total product quantity in order
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+    - name: product_order
+      description: Binary flag - 1 if product order (product_qty > 0 AND net_sales > $250)
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: sample_order
+      description: Binary flag - 1 if sample-only order (sample_qty > 0 AND product_qty = 0)
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: new_customer_flag
+      description: Binary flag - 1 if this is customer's first product order
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: lifetime_product_orders
+      description: Cumulative count of product orders for this customer up to this order
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: lifetime_product_revenue
+      description: Cumulative product revenue for this customer up to this order
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+  - name: flooret_test_table
+    description: 'Test or sample table - likely used for development/QA. Contains basic date, currency, and revenue fields.
+
+      '
+    columns:
+    - name: Date
+      description: Date field
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: Currency
+      description: Currency code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: Revenue
+      description: Revenue amount
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency

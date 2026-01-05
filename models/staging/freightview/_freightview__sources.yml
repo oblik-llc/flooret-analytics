@@ -1,0 +1,218 @@
+version: 2
+sources:
+- name: ft_freightview
+  description: 'Freightview logistics platform data for managing freight shipments and carrier rates. Tracks shipment quotes, bookings, tracking, and invoicing for LTL/FTL freight. Critical for analyzing shipping costs and carrier performance.
+
+    '
+  tables:
+  - name: shipment
+    description: 'Freight shipments with origin, destination, carrier, rates, and tracking information. Includes quote details, booking status, pickup/delivery dates, and invoice amounts. Use for analyzing shipping costs, transit times, and carrier performance. Key nested fields: origin_*, destination_*, bill_to_*, rate_*, dispatch_*, tracking_*, invoice_*
+
+      '
+    columns:
+    - name: id
+      description: Unique shipment identifier
+      meta:
+        semantic_type: identifier
+    - name: created_date
+      description: Date shipment was created in Freightview
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: status
+      description: Shipment status (quoted, booked, in_transit, delivered, etc.)
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: rate_total
+      description: Total freight cost for the shipment
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: rate_carrier
+      description: Carrier name for the selected rate
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: rate_transit_days
+      description: Estimated transit days for delivery
+      meta:
+        semantic_type: measure
+        default_aggregation: avg
+    - name: rate_service_type
+      description: Service level (standard, expedited, guaranteed, etc.)
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: pickup_date
+      description: Scheduled pickup date
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: tracking_status
+      description: Current tracking status of shipment
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: tracking_delivery_date_actual
+      description: Actual delivery date (null if not delivered)
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: invoice_amount
+      description: Final invoiced amount for shipment
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: origin_city
+      description: Origin city
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: origin_state
+      description: Origin state/province
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: destination_city
+      description: Destination city
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+    - name: destination_state
+      description: Destination state/province
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+  - name: shipment_accessorial
+    description: 'Additional services (accessorials) added to shipments like liftgate, inside delivery, etc. Used for tracking surcharges and special handling requirements.
+
+      '
+    columns:
+    - name: shipment_id
+      description: Foreign key to shipment table
+      meta:
+        semantic_type: identifier
+    - name: accessorial
+      description: Type of accessorial service (liftgate, residential, etc.)
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+  - name: shipment_item
+    description: 'Individual freight items/packages within a shipment. Contains dimensions, weight, freight class, and commodity information.
+
+      '
+    columns:
+    - name: shipment_id
+      description: Foreign key to shipment table
+      meta:
+        semantic_type: identifier
+    - name: weight
+      description: Weight of item in pounds
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: length
+      description: Length in inches
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: width
+      description: Width in inches
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: height
+      description: Height in inches
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: freight_class
+      description: NMFC freight class (50-500, determines pricing)
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+    - name: pieces
+      description: Number of pieces/pallets
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: quantity
+  - name: shipment_rate_charge
+    description: 'Detailed charge breakdown for shipment rates. Shows base freight charges, fuel surcharges, accessorial fees, etc.
+
+      '
+    columns:
+    - name: shipment_id
+      description: Foreign key to shipment table
+      meta:
+        semantic_type: identifier
+    - name: name
+      description: Name of the charge (Freight, Fuel Surcharge, etc.)
+      meta:
+        semantic_type: dimension
+        cardinality: high
+    - name: amount
+      description: Amount of this charge
+      meta:
+        semantic_type: measure
+        default_aggregation: sum
+        unit: USD
+        format: currency
+    - name: code
+      description: Charge code
+      meta:
+        semantic_type: dimension
+        cardinality: medium
+  - name: shipment_tracking_history
+    description: 'Historical tracking events for shipments. Contains pickup, in-transit, and delivery events with timestamps.
+
+      '
+    columns:
+    - name: shipment_id
+      description: Foreign key to shipment table
+      meta:
+        semantic_type: identifier
+    - name: event_date
+      description: Date/time of tracking event
+      meta:
+        semantic_type: time_dimension
+        time_grains:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+    - name: status
+      description: Status at this event (picked_up, in_transit, delivered, etc.)
+      meta:
+        semantic_type: dimension
+        cardinality: low
+    - name: summary
+      description: Description of the tracking event
+      meta:
+        semantic_type: dimension
+        cardinality: medium
