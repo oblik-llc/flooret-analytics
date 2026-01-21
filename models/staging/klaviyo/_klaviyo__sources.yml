@@ -8,7 +8,7 @@ sources:
 
     and granular event tracking for email/SMS marketing activities. Critical for
 
-    measuring email ROI, customer engagement, and attribution for Florret''s sample
+    measuring email ROI, customer engagement, and attribution for Flooret''s sample
 
     order nurture campaigns.
 
@@ -170,7 +170,7 @@ sources:
         - sender_email
         - from_address
     - name: from_name
-      description: 'Sender display name (e.g., "Florret Team", "Sarah from Florret").
+      description: 'Sender display name (e.g., "Flooret Team", "Sarah from Flooret").
 
         '
       meta:
@@ -751,7 +751,7 @@ sources:
     - name: flow_name
       description: 'Denormalized flow name (e.g., "Welcome Series", "Post-Purchase Follow-Up",
 
-        "Sample Order Nurture"). Critical for Florret''s sample-to-purchase tracking.
+        "Sample Order Nurture"). Critical for Flooret''s sample-to-purchase tracking.
 
         '
       meta:
@@ -904,7 +904,7 @@ sources:
       **Use for**: Nurture campaign analysis, automated revenue tracking, flow optimization.
 
 
-      **Florret use case**: Analyze "Sample Order Nurture" flow performance - how many
+      **Flooret use case**: Analyze "Sample Order Nurture" flow performance - how many
 
       customers who ordered samples are being converted to product purchases via email.
 
@@ -1129,7 +1129,7 @@ sources:
         **Primary metric for flow ROI calculation.**
 
 
-        For Florret: Compare sample order nurture flow revenue to other flows to
+        For Flooret: Compare sample order nurture flow revenue to other flows to
 
         measure effectiveness of sample-to-purchase conversion emails.
 
@@ -1596,7 +1596,7 @@ sources:
     - name: organization
       description: 'Company/organization name (if customer is a business).
 
-        Relevant for Florret''s commercial customers.
+        Relevant for Flooret''s commercial customers.
 
         '
       meta:

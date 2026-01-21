@@ -1,6 +1,6 @@
 # Semantic Metadata Enrichment Process
 
-**Project:** Florret Analytics - dbt Source Documentation
+**Project:** Flooret Analytics - dbt Source Documentation
 **Date:** January 2026
 **Datasets Enriched:** 11 (Shopify, GA4, Klaviyo, HubSpot, Facebook Ads, Google Ads, Amazon, Gladly, Freightview, Analysis)
 
@@ -8,7 +8,7 @@
 
 ## Overview
 
-This document describes the process used to automatically generate semantic metadata for dbt source YAML files, enriched with both platform knowledge and Florret-specific business rules.
+This document describes the process used to automatically generate semantic metadata for dbt source YAML files, enriched with both platform knowledge and Flooret-specific business rules.
 
 ## Problem Statement
 
@@ -16,7 +16,7 @@ Raw BigQuery schemas lack business context needed for:
 - LLM-powered query generation
 - Accurate metric calculations
 - Correct field selection (e.g., `email` vs `customer_id`)
-- Florret-specific business logic (line item classification, product categories, conversion tracking)
+- Flooret-specific business logic (line item classification, product categories, conversion tracking)
 
 ## Solution Architecture
 
@@ -125,7 +125,7 @@ python3 generate_semantic_metadata.py \
 
 **Input sources:**
 1. Heuristic YAML from Step 2
-2. `business_rules.md` (Florret-specific logic)
+2. `business_rules.md` (Flooret-specific logic)
 3. Built-in LLM knowledge of platforms (Shopify, GA4, Klaviyo, etc.)
 
 **Process:**
@@ -133,20 +133,20 @@ python3 generate_semantic_metadata.py \
 For each dataset, I spawned a Claude agent with this prompt structure:
 
 ```
-You are enriching {dataset_name} for Florret, a flooring company.
+You are enriching {dataset_name} for Flooret, a flooring company.
 
 Platform: {platform_name} (e.g., Shopify, GA4, Klaviyo)
 Context: {platform_description + business_rules.md}
 
 Enrich the heuristic YAML with:
 1. Platform-specific descriptions (using your knowledge of {platform})
-2. Florret business context (from business_rules.md)
+2. Flooret business context (from business_rules.md)
 3. Additional metadata for LLM query generation
 
 Guidelines:
 - Keep all existing meta tags
-- Add descriptions that reference platform concepts + Florret rules
-- Add Florret-specific meta fields (thresholds, use_instead, etc.)
+- Add descriptions that reference platform concepts + Flooret rules
+- Add Flooret-specific meta fields (thresholds, use_instead, etc.)
 - Reference business_rules.md sections where applicable
 ```
 
@@ -161,7 +161,7 @@ Guidelines:
 | ft_facebook_ads | Campaign structure, cost_per_action_type, attribution models |
 | google_ads | cost_micros, segments, account ID suffixes |
 
-**Florret business rules applied** (from business_rules.md):
+**Flooret business rules applied** (from business_rules.md):
 
 - Line item classification (Sample/Product/Accessories) → sections 1-2
 - Product categories (Base, Signature, Craftsman) → section 3
@@ -174,7 +174,7 @@ Guidelines:
 **Example enriched output:**
 ```yaml
 - name: total_price_pres_amount
-  description: "Order total in presentment currency (customer-facing price). In Shopify, this is the total amount the customer sees including tax and shipping. For Florret business logic: Use subtotal_price for 'sales' metrics. For Product Order classification, must be >$250 (prevents sample orders with small product add-ons from counting as product orders). See business_rules.md section 7."
+  description: "Order total in presentment currency (customer-facing price). In Shopify, this is the total amount the customer sees including tax and shipping. For Flooret business logic: Use subtotal_price for 'sales' metrics. For Product Order classification, must be >$250 (prevents sample orders with small product add-ons from counting as product orders). See business_rules.md section 7."
   meta:
     semantic_type: measure
     default_aggregation: sum
@@ -198,7 +198,7 @@ Task(
 **Output:**
 - 11 fully enriched YAML files in `./documentation/dbt_sources_enriched/`
 - Descriptions for critical fields
-- Platform-specific + Florret-specific metadata
+- Platform-specific + Flooret-specific metadata
 - Cross-references to business_rules.md
 
 ---
@@ -278,7 +278,7 @@ This hybrid approach balanced speed, cost, and quality.
 
 The enriched metadata enables LLMs to:
 
-✅ **Understand Florret's business logic**
+✅ **Understand Flooret's business logic**
 ```yaml
 # LLM sees this and knows line item classification rules
 description: "Line item title. Used in classification:
@@ -376,7 +376,7 @@ Cost estimate: ~$10-20 for 11 datasets (one API call per dataset)
 
 1. **Heuristics first** - Covered 80% of columns automatically
 2. **Platform detection** - Leveraged LLM's built-in knowledge
-3. **business_rules.md** - Single source of truth for Florret logic
+3. **business_rules.md** - Single source of truth for Flooret logic
 4. **Two-store documentation** - Explicitly called out threshold differences
 5. **YAML structure** - Meta tags make metadata machine-readable
 
@@ -416,11 +416,11 @@ Cost estimate: ~$10-20 for 11 datasets (one API call per dataset)
 
 ## Conclusion
 
-This process successfully generated **LLM-ready semantic metadata** for Florret's entire data warehouse by combining:
+This process successfully generated **LLM-ready semantic metadata** for Flooret's entire data warehouse by combining:
 
 1. **Automated schema collection** (BigQuery + Fivetran APIs)
 2. **Heuristic inference** (pattern matching on column names/types)
-3. **LLM enrichment** (platform knowledge + Florret business rules)
+3. **LLM enrichment** (platform knowledge + Flooret business rules)
 
 The enriched YAML files enable accurate LLM query generation, informed dbt model development, and comprehensive data documentation.
 

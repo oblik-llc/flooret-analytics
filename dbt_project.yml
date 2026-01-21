@@ -1,8 +1,8 @@
-name: 'florret_analytics'
+name: 'flooret_analytics'
 version: '1.0.0'
 config-version: 2
 
-profile: 'florret_analytics'
+profile: 'flooret_analytics'
 
 model-paths: ["models"]
 analysis-paths: ["analyses"]
@@ -17,7 +17,7 @@ clean-targets:
   - "dbt_packages"
 
 models:
-  florret_analytics:
+  flooret_analytics:
     staging:
       +materialized: view
       +schema: staging

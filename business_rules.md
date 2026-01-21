@@ -1,4 +1,4 @@
-# Florret Business Rules
+# Flooret Business Rules
 
 Extracted from analyst's BigQuery scheduled queries. These rules define how raw Shopify data is transformed into business metrics.
 
@@ -310,7 +310,7 @@ The business logic is identical except for these differences.
 
 1. **Customer identifier:** The analyst uses `email` (lowercased) as the primary customer identifier for lifetime calculations, not `customer_id`. This handles guest checkouts and cross-device behavior.
 
-2. **Product category is critical:** Many downstream metrics depend on correct product category assignment. The SKU regex patterns are specific to Florret's naming conventions.
+2. **Product category is critical:** Many downstream metrics depend on correct product category assignment. The SKU regex patterns are specific to Flooret's naming conventions.
 
 3. **Sample-to-purchase funnel is core:** Much of the analysis focuses on tracking customers from sample orders to product purchases. The `first_*_order_date` fields are foundational.
 

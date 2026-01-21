@@ -1,4 +1,4 @@
-florret_analytics:
+flooret_analytics:
   target: dev
   outputs:
     dev:

@@ -1,14 +1,14 @@
 {% docs __overview__ %}
 
-# Florret Analytics - dbt Project
+# Flooret Analytics - dbt Project
 
 ## Purpose
 
-This dbt project transforms raw data from Florret's e-commerce and marketing platforms into analytics-ready models for business intelligence and reporting.
+This dbt project transforms raw data from Flooret's e-commerce and marketing platforms into analytics-ready models for business intelligence and reporting.
 
 ## Business Context
 
-Florret is a flooring company with a unique business model:
+Flooret is a flooring company with a unique business model:
 - **Two Shopify stores**: Regular (DTC-focused, $55 product threshold) and Commercial (Trade-focused, $40 product threshold)
 - **Sample-to-purchase funnel**: Core business metric tracking customers from sample orders to product purchases
 - **Product categories**: Base, Signature, Craftsman, Silvan Hardwood, Iona
@@ -33,7 +33,7 @@ Florret is a flooring company with a unique business model:
 - **Gladly** - `ft_gladly`: Customer support interactions
 
 ### Custom Business Logic
-- **Analysis** - `analysis`: Pre-computed Florret business logic tables (funnel analysis, line item classification)
+- **Analysis** - `analysis`: Pre-computed Flooret business logic tables (funnel analysis, line item classification)
 
 ## Project Structure
 
@@ -84,7 +84,7 @@ models/
 
 ## Key Business Rules
 
-Critical Florret-specific logic implemented in this project:
+Critical Flooret-specific logic implemented in this project:
 
 ### 1. Customer Identification
 **Primary key: `email` (lowercased), NOT `customer_id`**
@@ -175,7 +175,7 @@ This metadata enables:
 
 ### Phase 1: Sources (COMPLETE)
 ✅ Documented all 11 data sources with enriched metadata
-✅ Platform knowledge + Florret business rules integrated
+✅ Platform knowledge + Flooret business rules integrated
 
 ### Phase 2: Feasibility Analysis (NEXT)
 - Analyze wishlist metrics against available data
@@ -197,12 +197,12 @@ This metadata enables:
 
 ## Resources
 
-- **Business Rules**: See `business_rules.md` in project root for complete Florret business logic
+- **Business Rules**: See `business_rules.md` in project root for complete Flooret business logic
 - **Source Documentation**: Each staging folder has `_*__sources.yml` with full field descriptions
 - **dbt Docs**: Run `dbt docs generate` and `dbt docs serve` to view project documentation
 
 ---
 
-*This project uses dbt to transform raw data into analytics-ready models following Florret's unique business logic and sample-to-purchase conversion tracking.*
+*This project uses dbt to transform raw data into analytics-ready models following Flooret's unique business logic and sample-to-purchase conversion tracking.*
 
 {% enddocs %}

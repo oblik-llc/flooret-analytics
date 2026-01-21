@@ -1,7 +1,7 @@
 version: 2
 sources:
 - name: analytics_266190494
-  description: 'Google Analytics 4 (GA4) BigQuery export data for Florret''s e-commerce analytics.
+  description: 'Google Analytics 4 (GA4) BigQuery export data for Flooret''s e-commerce analytics.
 
 
     This dataset contains raw event-level data from GA4, including:
@@ -232,7 +232,7 @@ sources:
         NULL for unauthenticated users or if User-ID not implemented.
 
 
-        Critical for Florret: Cross-device tracking for logged-in customers.
+        Critical for Flooret: Cross-device tracking for logged-in customers.
 
         Join to Shopify customer data using this field if available.
 
@@ -327,7 +327,7 @@ sources:
 
         Note: GA4''s LTV calculation may differ from Shopify''s actual customer LTV.
 
-        For Florret, prefer calculating LTV directly from Shopify order data.
+        For Flooret, prefer calculating LTV directly from Shopify order data.
 
         '
       meta:
@@ -359,7 +359,7 @@ sources:
         - app_info.firebase_app_id: Firebase project ID
 
 
-        For Florret (web-only), this will typically be NULL.
+        For Flooret (web-only), this will typically be NULL.
 
         '
       meta:
@@ -388,7 +388,7 @@ sources:
         Values: "WEB", "IOS", "ANDROID"
 
 
-        For Florret (web-only e-commerce), expect "WEB" exclusively.
+        For Flooret (web-only e-commerce), expect "WEB" exclusively.
 
         '
       meta:
@@ -407,13 +407,13 @@ sources:
         semantic_type: nested_attributes
         contains: legacy_custom_dimensions
     - name: ecommerce
-      description: "RECORD containing e-commerce transaction data for purchase events.\nNULL for non-purchase events.\n\nStructure and key fields:\n- ecommerce.transaction_id: Unique order ID (join to Shopify order_name or order_id)\n- ecommerce.purchase_revenue: Total revenue (subtotal + tax + shipping)\n- ecommerce.purchase_revenue_in_usd: Revenue in USD (currency converted)\n- ecommerce.refund_value: Refund amount (for refund events)\n- ecommerce.refund_value_in_usd: Refund in USD\n- ecommerce.shipping_value: Shipping cost\n- ecommerce.tax_value: Tax amount\n- ecommerce.unique_items: Count of unique items in transaction\n- ecommerce.total_item_quantity: Total quantity of all items\n\nCritical for Florret:\n- Join to Shopify via transaction_id = order_name\n- Compare GA4 revenue to Shopify net sales for data quality checks\n- Use for marketing attribution and channel ROI analysis\n\nQuery example:\n```sql\nSELECT\n  ecommerce.transaction_id AS order_id,\n  ecommerce.purchase_revenue AS\
+      description: "RECORD containing e-commerce transaction data for purchase events.\nNULL for non-purchase events.\n\nStructure and key fields:\n- ecommerce.transaction_id: Unique order ID (join to Shopify order_name or order_id)\n- ecommerce.purchase_revenue: Total revenue (subtotal + tax + shipping)\n- ecommerce.purchase_revenue_in_usd: Revenue in USD (currency converted)\n- ecommerce.refund_value: Refund amount (for refund events)\n- ecommerce.refund_value_in_usd: Refund in USD\n- ecommerce.shipping_value: Shipping cost\n- ecommerce.tax_value: Tax amount\n- ecommerce.unique_items: Count of unique items in transaction\n- ecommerce.total_item_quantity: Total quantity of all items\n\nCritical for Flooret:\n- Join to Shopify via transaction_id = order_name\n- Compare GA4 revenue to Shopify net sales for data quality checks\n- Use for marketing attribution and channel ROI analysis\n\nQuery example:\n```sql\nSELECT\n  ecommerce.transaction_id AS order_id,\n  ecommerce.purchase_revenue AS\
         \ revenue,\n  ecommerce.total_item_quantity AS items\nFROM events_*\nWHERE event_name = 'purchase'\n```\n"
       meta:
         semantic_type: nested_attributes
         contains: ecommerce_transaction_data
     - name: items
-      description: "ARRAY of e-commerce items (products) associated with the event.\nPopulated for e-commerce events: purchase, add_to_cart, view_item, etc.\n\nStructure: ARRAY<STRUCT<item_id STRING, item_name STRING, ...>>\n\nKey fields per item:\n- item_id: Product SKU (join to Shopify variant_sku)\n- item_name: Product title\n- item_brand: Brand name\n- item_category: Primary category\n- item_category2, item_category3, item_category4, item_category5: Category hierarchy\n- item_variant: Variant name (e.g., color, size)\n- price: Unit price\n- quantity: Quantity purchased/added\n- item_revenue: Total revenue for this item (price × quantity)\n- coupon: Item-level coupon code\n- affiliation: Store or affiliation ID\n- location_id: Physical store location (if applicable)\n- index: Position in product list (for view_item_list events)\n- promotion_id: Promotion identifier\n- promotion_name: Promotion name\n\nCritical for Florret product analysis:\n- Sample vs. product identification: Check item_name\
+      description: "ARRAY of e-commerce items (products) associated with the event.\nPopulated for e-commerce events: purchase, add_to_cart, view_item, etc.\n\nStructure: ARRAY<STRUCT<item_id STRING, item_name STRING, ...>>\n\nKey fields per item:\n- item_id: Product SKU (join to Shopify variant_sku)\n- item_name: Product title\n- item_brand: Brand name\n- item_category: Primary category\n- item_category2, item_category3, item_category4, item_category5: Category hierarchy\n- item_variant: Variant name (e.g., color, size)\n- price: Unit price\n- quantity: Quantity purchased/added\n- item_revenue: Total revenue for this item (price × quantity)\n- coupon: Item-level coupon code\n- affiliation: Store or affiliation ID\n- location_id: Physical store location (if applicable)\n- index: Position in product list (for view_item_list events)\n- promotion_id: Promotion identifier\n- promotion_name: Promotion name\n\nCritical for Flooret product analysis:\n- Sample vs. product identification: Check item_name\
         \ for \"Cut\", \"Sample\", \"Plank\"\n- Product category extraction: Parse item_category or item_id (SKU)\n- Color conversion tracking: Track item_id from view_item → add_to_cart → purchase\n\nQuery pattern:\n```sql\nSELECT\n  event_name,\n  item.item_id AS sku,\n  item.item_name AS product_name,\n  item.quantity,\n  item.price\nFROM events_*,\nUNNEST(items) AS item\nWHERE event_name IN ('purchase', 'add_to_cart', 'view_item')\n```\n"
       meta:
         semantic_type: nested_attributes
@@ -501,7 +501,7 @@ sources:
       meta:
         semantic_type: identifier
     - name: session_traffic_source_last_click
-      description: "RECORD containing last-click attribution for the current session.\nThis represents the most recent traffic source that initiated the session.\n\nFields:\n- session_traffic_source_last_click.manual_campaign_id: Campaign ID\n- session_traffic_source_last_click.manual_campaign_name: Campaign name\n- session_traffic_source_last_click.manual_source: Traffic source\n- session_traffic_source_last_click.manual_medium: Marketing medium\n- session_traffic_source_last_click.manual_term: Search keyword\n- session_traffic_source_last_click.manual_content: Ad content variant\n- session_traffic_source_last_click.gclid: Google Ads click ID\n- session_traffic_source_last_click.dclid: Display & Video 360 click ID\n- session_traffic_source_last_click.srsltid: Shopping ads click ID\n\nCritical for Florret marketing analysis:\n- Last-touch attribution before purchase\n- Channel performance and ROI\n- Campaign effectiveness\n\nUse this for conversion attribution (vs. traffic_source for acquisition\
+      description: "RECORD containing last-click attribution for the current session.\nThis represents the most recent traffic source that initiated the session.\n\nFields:\n- session_traffic_source_last_click.manual_campaign_id: Campaign ID\n- session_traffic_source_last_click.manual_campaign_name: Campaign name\n- session_traffic_source_last_click.manual_source: Traffic source\n- session_traffic_source_last_click.manual_medium: Marketing medium\n- session_traffic_source_last_click.manual_term: Search keyword\n- session_traffic_source_last_click.manual_content: Ad content variant\n- session_traffic_source_last_click.gclid: Google Ads click ID\n- session_traffic_source_last_click.dclid: Display & Video 360 click ID\n- session_traffic_source_last_click.srsltid: Shopping ads click ID\n\nCritical for Flooret marketing analysis:\n- Last-touch attribution before purchase\n- Channel performance and ROI\n- Campaign effectiveness\n\nUse this for conversion attribution (vs. traffic_source for acquisition\
         \ attribution).\n\nQuery example:\n```sql\nSELECT\n  session_traffic_source_last_click.manual_source AS source,\n  session_traffic_source_last_click.manual_medium AS medium,\n  COUNT(DISTINCT CASE WHEN event_name = 'purchase' THEN user_pseudo_id END) AS converters\nFROM events_*\nGROUP BY 1, 2\n```\n"
       meta:
         semantic_type: nested_attributes
@@ -519,7 +519,7 @@ sources:
         - publisher.id: Publisher ID
 
 
-        For Florret (e-commerce site, not a publisher), this will be NULL.
+        For Flooret (e-commerce site, not a publisher), this will be NULL.
 
         '
       meta:
@@ -750,7 +750,7 @@ sources:
         NULL for unauthenticated users or if User-ID not implemented.
 
 
-        Critical for Florret: Cross-device tracking for logged-in customers.
+        Critical for Flooret: Cross-device tracking for logged-in customers.
 
         Join to Shopify customer data using this field if available.
 
@@ -845,7 +845,7 @@ sources:
 
         Note: GA4''s LTV calculation may differ from Shopify''s actual customer LTV.
 
-        For Florret, prefer calculating LTV directly from Shopify order data.
+        For Flooret, prefer calculating LTV directly from Shopify order data.
 
         '
       meta:
@@ -877,7 +877,7 @@ sources:
         - app_info.firebase_app_id: Firebase project ID
 
 
-        For Florret (web-only), this will typically be NULL.
+        For Flooret (web-only), this will typically be NULL.
 
         '
       meta:
@@ -906,7 +906,7 @@ sources:
         Values: "WEB", "IOS", "ANDROID"
 
 
-        For Florret (web-only e-commerce), expect "WEB" exclusively.
+        For Flooret (web-only e-commerce), expect "WEB" exclusively.
 
         '
       meta:
@@ -925,13 +925,13 @@ sources:
         semantic_type: nested_attributes
         contains: legacy_custom_dimensions
     - name: ecommerce
-      description: "RECORD containing e-commerce transaction data for purchase events.\nNULL for non-purchase events.\n\nStructure and key fields:\n- ecommerce.transaction_id: Unique order ID (join to Shopify order_name or order_id)\n- ecommerce.purchase_revenue: Total revenue (subtotal + tax + shipping)\n- ecommerce.purchase_revenue_in_usd: Revenue in USD (currency converted)\n- ecommerce.refund_value: Refund amount (for refund events)\n- ecommerce.refund_value_in_usd: Refund in USD\n- ecommerce.shipping_value: Shipping cost\n- ecommerce.tax_value: Tax amount\n- ecommerce.unique_items: Count of unique items in transaction\n- ecommerce.total_item_quantity: Total quantity of all items\n\nCritical for Florret:\n- Join to Shopify via transaction_id = order_name\n- Compare GA4 revenue to Shopify net sales for data quality checks\n- Use for marketing attribution and channel ROI analysis\n\nQuery example:\n```sql\nSELECT\n  ecommerce.transaction_id AS order_id,\n  ecommerce.purchase_revenue AS\
+      description: "RECORD containing e-commerce transaction data for purchase events.\nNULL for non-purchase events.\n\nStructure and key fields:\n- ecommerce.transaction_id: Unique order ID (join to Shopify order_name or order_id)\n- ecommerce.purchase_revenue: Total revenue (subtotal + tax + shipping)\n- ecommerce.purchase_revenue_in_usd: Revenue in USD (currency converted)\n- ecommerce.refund_value: Refund amount (for refund events)\n- ecommerce.refund_value_in_usd: Refund in USD\n- ecommerce.shipping_value: Shipping cost\n- ecommerce.tax_value: Tax amount\n- ecommerce.unique_items: Count of unique items in transaction\n- ecommerce.total_item_quantity: Total quantity of all items\n\nCritical for Flooret:\n- Join to Shopify via transaction_id = order_name\n- Compare GA4 revenue to Shopify net sales for data quality checks\n- Use for marketing attribution and channel ROI analysis\n\nQuery example:\n```sql\nSELECT\n  ecommerce.transaction_id AS order_id,\n  ecommerce.purchase_revenue AS\
         \ revenue,\n  ecommerce.total_item_quantity AS items\nFROM events_*\nWHERE event_name = 'purchase'\n```\n"
       meta:
         semantic_type: nested_attributes
         contains: ecommerce_transaction_data
     - name: items
-      description: "ARRAY of e-commerce items (products) associated with the event.\nPopulated for e-commerce events: purchase, add_to_cart, view_item, etc.\n\nStructure: ARRAY<STRUCT<item_id STRING, item_name STRING, ...>>\n\nKey fields per item:\n- item_id: Product SKU (join to Shopify variant_sku)\n- item_name: Product title\n- item_brand: Brand name\n- item_category: Primary category\n- item_category2, item_category3, item_category4, item_category5: Category hierarchy\n- item_variant: Variant name (e.g., color, size)\n- price: Unit price\n- quantity: Quantity purchased/added\n- item_revenue: Total revenue for this item (price × quantity)\n- coupon: Item-level coupon code\n- affiliation: Store or affiliation ID\n- location_id: Physical store location (if applicable)\n- index: Position in product list (for view_item_list events)\n- promotion_id: Promotion identifier\n- promotion_name: Promotion name\n\nCritical for Florret product analysis:\n- Sample vs. product identification: Check item_name\
+      description: "ARRAY of e-commerce items (products) associated with the event.\nPopulated for e-commerce events: purchase, add_to_cart, view_item, etc.\n\nStructure: ARRAY<STRUCT<item_id STRING, item_name STRING, ...>>\n\nKey fields per item:\n- item_id: Product SKU (join to Shopify variant_sku)\n- item_name: Product title\n- item_brand: Brand name\n- item_category: Primary category\n- item_category2, item_category3, item_category4, item_category5: Category hierarchy\n- item_variant: Variant name (e.g., color, size)\n- price: Unit price\n- quantity: Quantity purchased/added\n- item_revenue: Total revenue for this item (price × quantity)\n- coupon: Item-level coupon code\n- affiliation: Store or affiliation ID\n- location_id: Physical store location (if applicable)\n- index: Position in product list (for view_item_list events)\n- promotion_id: Promotion identifier\n- promotion_name: Promotion name\n\nCritical for Flooret product analysis:\n- Sample vs. product identification: Check item_name\
         \ for \"Cut\", \"Sample\", \"Plank\"\n- Product category extraction: Parse item_category or item_id (SKU)\n- Color conversion tracking: Track item_id from view_item → add_to_cart → purchase\n\nQuery pattern:\n```sql\nSELECT\n  event_name,\n  item.item_id AS sku,\n  item.item_name AS product_name,\n  item.quantity,\n  item.price\nFROM events_*,\nUNNEST(items) AS item\nWHERE event_name IN ('purchase', 'add_to_cart', 'view_item')\n```\n"
       meta:
         semantic_type: nested_attributes
@@ -1019,7 +1019,7 @@ sources:
       meta:
         semantic_type: identifier
     - name: session_traffic_source_last_click
-      description: "RECORD containing last-click attribution for the current session.\nThis represents the most recent traffic source that initiated the session.\n\nFields:\n- session_traffic_source_last_click.manual_campaign_id: Campaign ID\n- session_traffic_source_last_click.manual_campaign_name: Campaign name\n- session_traffic_source_last_click.manual_source: Traffic source\n- session_traffic_source_last_click.manual_medium: Marketing medium\n- session_traffic_source_last_click.manual_term: Search keyword\n- session_traffic_source_last_click.manual_content: Ad content variant\n- session_traffic_source_last_click.gclid: Google Ads click ID\n- session_traffic_source_last_click.dclid: Display & Video 360 click ID\n- session_traffic_source_last_click.srsltid: Shopping ads click ID\n\nCritical for Florret marketing analysis:\n- Last-touch attribution before purchase\n- Channel performance and ROI\n- Campaign effectiveness\n\nUse this for conversion attribution (vs. traffic_source for acquisition\
+      description: "RECORD containing last-click attribution for the current session.\nThis represents the most recent traffic source that initiated the session.\n\nFields:\n- session_traffic_source_last_click.manual_campaign_id: Campaign ID\n- session_traffic_source_last_click.manual_campaign_name: Campaign name\n- session_traffic_source_last_click.manual_source: Traffic source\n- session_traffic_source_last_click.manual_medium: Marketing medium\n- session_traffic_source_last_click.manual_term: Search keyword\n- session_traffic_source_last_click.manual_content: Ad content variant\n- session_traffic_source_last_click.gclid: Google Ads click ID\n- session_traffic_source_last_click.dclid: Display & Video 360 click ID\n- session_traffic_source_last_click.srsltid: Shopping ads click ID\n\nCritical for Flooret marketing analysis:\n- Last-touch attribution before purchase\n- Channel performance and ROI\n- Campaign effectiveness\n\nUse this for conversion attribution (vs. traffic_source for acquisition\
         \ attribution).\n\nQuery example:\n```sql\nSELECT\n  session_traffic_source_last_click.manual_source AS source,\n  session_traffic_source_last_click.manual_medium AS medium,\n  COUNT(DISTINCT CASE WHEN event_name = 'purchase' THEN user_pseudo_id END) AS converters\nFROM events_*\nGROUP BY 1, 2\n```\n"
       meta:
         semantic_type: nested_attributes
@@ -1037,7 +1037,7 @@ sources:
         - publisher.id: Publisher ID
 
 
-        For Florret (e-commerce site, not a publisher), this will be NULL.
+        For Flooret (e-commerce site, not a publisher), this will be NULL.
 
         '
       meta:

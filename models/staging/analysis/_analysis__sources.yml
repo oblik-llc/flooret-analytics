@@ -1,7 +1,7 @@
 version: 2
 sources:
 - name: analysis
-  description: 'Custom analysis tables created by analysts or legacy dbt models. These tables contain Florret-specific business logic and derived metrics. IMPORTANT: These are analyst-created tables that implement Florret''s sample-to-purchase funnel logic.
+  description: 'Custom analysis tables created by analysts or legacy dbt models. These tables contain Flooret-specific business logic and derived metrics. IMPORTANT: These are analyst-created tables that implement Flooret''s sample-to-purchase funnel logic.
 
     '
   tables:
@@ -74,7 +74,7 @@ sources:
         semantic_type: dimension
         cardinality: low
   - name: flooret_lineitem_sales_cleaned
-    description: 'Order line items with Florret''s classification logic applied. Each line item classified as Sample, Product, or Accessory based on price thresholds and SKU patterns. Includes customer funnel dates joined from flooret_funnel table.
+    description: 'Order line items with Flooret''s classification logic applied. Each line item classified as Sample, Product, or Accessory based on price thresholds and SKU patterns. Includes customer funnel dates joined from flooret_funnel table.
 
       '
     columns:

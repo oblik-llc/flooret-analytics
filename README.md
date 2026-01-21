@@ -1,12 +1,12 @@
-# Florret Analytics - dbt Project
+# Flooret Analytics - dbt Project
 
-Analytics transformation layer for Florret's e-commerce data built with dbt and BigQuery.
+Analytics transformation layer for Flooret's e-commerce data built with dbt and BigQuery.
 
 ## Project Status
 
 ✅ **Phase 1 Complete**: Project structure created with enriched source documentation
 - 11 data sources documented with semantic metadata
-- Platform knowledge + Florret business rules integrated
+- Platform knowledge + Flooret business rules integrated
 - Production-ready source YAML files
 
 ## Quick Start
@@ -37,7 +37,7 @@ cp profiles.yml.example ~/.dbt/profiles.yml
 Your `~/.dbt/profiles.yml` should look like:
 
 ```yaml
-florret_analytics:
+flooret_analytics:
   target: dev
   outputs:
     dev:
@@ -53,7 +53,7 @@ florret_analytics:
 ### 3. Test Connection
 
 ```bash
-cd florret_analytics
+cd flooret_analytics
 dbt debug
 ```
 
@@ -86,15 +86,15 @@ This opens a browser with:
 - Interactive lineage graph
 - Source and model documentation
 - Column descriptions with business context
-- Florret business rules
+- Flooret business rules
 
 ## Project Structure
 
 ```
-florret_analytics/
+flooret_analytics/
 ├── dbt_project.yml              # Project configuration
 ├── profiles.yml.example         # BigQuery connection template
-├── business_rules.md            # Florret business logic reference
+├── business_rules.md            # Flooret business logic reference
 ├── SEMANTIC_ENRICHMENT_PROCESS.md  # How metadata was generated
 │
 ├── models/
@@ -110,7 +110,7 @@ florret_analytics/
 │   │   ├── amazon/              # Marketplace
 │   │   ├── gladly/              # Customer support
 │   │   ├── freightview/         # Logistics
-│   │   └── analysis/            # Custom Florret business logic
+│   │   └── analysis/            # Custom Flooret business logic
 │   │
 │   ├── intermediate/            # Business logic transformations
 │   │   └── (Phase 3: to be built)
@@ -144,7 +144,7 @@ florret_analytics/
 - **Gladly**: Customer support
 
 ### Custom Logic
-- **Analysis**: Pre-computed Florret business logic
+- **Analysis**: Pre-computed Flooret business logic
 
 ## Key Features
 
@@ -153,7 +153,7 @@ florret_analytics/
 All source YAML files include:
 
 1. **Platform-specific descriptions** - Leveraging knowledge of Shopify, GA4, Klaviyo, etc.
-2. **Florret business rules** - Line item classification, product categories, thresholds
+2. **Flooret business rules** - Line item classification, product categories, thresholds
 3. **Semantic metadata** - Measure vs dimension, aggregations, time grains
 4. **Field guidance** - Primary keys, canonical dates, join keys
 
@@ -161,7 +161,7 @@ Example from Shopify orders:
 
 ```yaml
 - name: total_price_pres_amount
-  description: "Order total in presentment currency. For Florret: Use subtotal_price
+  description: "Order total in presentment currency. For Flooret: Use subtotal_price
     for 'sales' metrics. For Product Order classification, must be >$250 (prevents
     sample orders with small add-ons from counting). See business_rules.md section 7."
   meta:
@@ -172,7 +172,7 @@ Example from Shopify orders:
       product_order_minimum: 250
 ```
 
-### Critical Florret Business Logic
+### Critical Flooret Business Logic
 
 **Customer Identification**: Use `email` (lowercased), NOT `customer_id`
 - Handles guest checkouts and cross-device tracking
@@ -224,11 +224,11 @@ This enables LLMs to:
 - Generate accurate queries for visualizations
 - Choose correct fields (email vs customer_id, processed_at vs created_at)
 - Apply proper transformations (timezone, product classification)
-- Understand Florret's unique business model
+- Understand Flooret's unique business model
 
 ## Resources
 
-- **Business Rules**: `business_rules.md` - Complete Florret business logic
+- **Business Rules**: `business_rules.md` - Complete Flooret business logic
 - **Enrichment Process**: `SEMANTIC_ENRICHMENT_PROCESS.md` - How metadata was generated
 - **dbt Docs**: https://docs.getdbt.com/
 - **Project Overview**: Run `dbt docs serve` and view the Overview page
@@ -245,4 +245,4 @@ Once the manifest is built, you can proceed to Phase 2 (feasibility analysis) or
 
 ---
 
-**Questions?** See `business_rules.md` for detailed Florret business logic or `models/overview.md` for project navigation.
+**Questions?** See `business_rules.md` for detailed Flooret business logic or `models/overview.md` for project navigation.

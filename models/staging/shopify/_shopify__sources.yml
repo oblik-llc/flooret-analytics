@@ -1,7 +1,7 @@
 version: 2
 sources:
 - name: ft_shopify_shopify
-  description: 'Fivetran-synced Shopify data from ft_shopify_shopify dataset. Contains both raw Shopify tables and Fivetran''s pre-built models (shopify_gql__*). Florret has TWO Shopify instances: regular (consumer) and commercial (trade). These are unioned in Fivetran with source_relation as the store identifier.'
+  description: 'Fivetran-synced Shopify data from ft_shopify_shopify dataset. Contains both raw Shopify tables and Fivetran''s pre-built models (shopify_gql__*). Flooret has TWO Shopify instances: regular (consumer) and commercial (trade). These are unioned in Fivetran with source_relation as the store identifier.'
   tables:
   - name: int_shopify_gql__collection
     columns:
@@ -39,7 +39,7 @@ sources:
         - quarter
         - year
     - name: _fivetran_synced
-      description: Fivetran sync timestamp. Not used in Florret business logic.
+      description: Fivetran sync timestamp. Not used in Flooret business logic.
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -50,11 +50,11 @@ sources:
         - quarter
         - year
     - name: source_relation
-      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      description: 'Fivetran source identifier. Flooret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         stores:
           regular:
             threshold: 55
@@ -72,23 +72,23 @@ sources:
   - name: int_shopify_gql__customer
     columns:
     - name: customer_id
-      description: 'Shopify customer ID. Note: In Florret''s business logic, email (not customer_id) is the primary customer identifier because customer_id is NULL for guest checkouts. Use for joins to customer table, but use LOWER(email) for lifetime metrics.'
+      description: 'Shopify customer ID. Note: In Flooret''s business logic, email (not customer_id) is the primary customer identifier because customer_id is NULL for guest checkouts. Use for joins to customer table, but use LOWER(email) for lifetime metrics.'
       meta:
         semantic_type: identifier
         business_terms:
         - customer
         - user_id
-        florret_usage: secondary_identifier
+        flooret_usage: secondary_identifier
         use_instead: email for customer aggregations
     - name: email
-      description: 'Customer email address. CRITICAL: This is Florret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
+      description: 'Customer email address. CRITICAL: This is Flooret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
       meta:
         semantic_type: dimension
         cardinality: high
         business_terms:
         - customer_email
         - user_email
-        florret_usage: primary_customer_identifier
+        flooret_usage: primary_customer_identifier
         preprocessing: LOWER(email)
         exclusions:
         - email NOT LIKE '%amazon%'
@@ -176,7 +176,7 @@ sources:
         - quarter
         - year
     - name: _fivetran_synced
-      description: Fivetran sync timestamp. Not used in Florret business logic.
+      description: Fivetran sync timestamp. Not used in Flooret business logic.
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -187,11 +187,11 @@ sources:
         - quarter
         - year
     - name: source_relation
-      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      description: 'Fivetran source identifier. Flooret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         stores:
           regular:
             threshold: 55
@@ -209,24 +209,24 @@ sources:
   - name: int_shopify_gql__customer_email_rollup
     columns:
     - name: email
-      description: 'Customer email address. CRITICAL: This is Florret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
+      description: 'Customer email address. CRITICAL: This is Flooret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
       meta:
         semantic_type: dimension
         cardinality: high
         business_terms:
         - customer_email
         - user_email
-        florret_usage: primary_customer_identifier
+        flooret_usage: primary_customer_identifier
         preprocessing: LOWER(email)
         exclusions:
         - email NOT LIKE '%amazon%'
         - email IS NOT NULL for customer analysis
     - name: source_relation
-      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      description: 'Fivetran source identifier. Flooret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         stores:
           regular:
             threshold: 55
@@ -250,7 +250,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: customer_segmentation
+        flooret_usage: customer_segmentation
         extracts:
         - customer_group
         - customer_type
@@ -392,7 +392,7 @@ sources:
         - revenue
         - gmv
         - order_value
-        florret_usage: order_classification
+        flooret_usage: order_classification
         threshold: 250
     - name: total_price_pres_currency_code
       meta:
@@ -415,7 +415,7 @@ sources:
         - revenue
         - gmv
         - order_value
-        florret_usage: order_classification
+        flooret_usage: order_classification
         threshold: 250
     - name: total_price_shop_currency_code
       meta:
@@ -451,7 +451,7 @@ sources:
         semantic_type: dimension
         cardinality: high
     - name: subtotal_price_pres_amount
-      description: Order subtotal before tax. In Florret's business logic, this is 'net_sales' or 'sales' for revenue metrics. Used as the primary revenue field.
+      description: Order subtotal before tax. In Flooret's business logic, this is 'net_sales' or 'sales' for revenue metrics. Used as the primary revenue field.
       meta:
         semantic_type: measure
         default_aggregation: sum
@@ -463,7 +463,7 @@ sources:
         - gmv
         - order_value
         - net_sales
-        florret_usage: revenue_metric
+        flooret_usage: revenue_metric
     - name: subtotal_price_pres_currency_code
       meta:
         semantic_type: dimension
@@ -474,7 +474,7 @@ sources:
         - gmv
         - order_value
     - name: subtotal_price_shop_amount
-      description: Order subtotal before tax. In Florret's business logic, this is 'net_sales' or 'sales' for revenue metrics. Used as the primary revenue field.
+      description: Order subtotal before tax. In Flooret's business logic, this is 'net_sales' or 'sales' for revenue metrics. Used as the primary revenue field.
       meta:
         semantic_type: measure
         default_aggregation: sum
@@ -486,7 +486,7 @@ sources:
         - gmv
         - order_value
         - net_sales
-        florret_usage: revenue_metric
+        flooret_usage: revenue_metric
     - name: subtotal_price_shop_currency_code
       meta:
         semantic_type: dimension
@@ -575,7 +575,7 @@ sources:
         - quarter
         - year
     - name: processed_timestamp
-      description: 'Shopify order processed timestamp in UTC. This is Florret''s CANONICAL order date field. Always convert to Pacific time: DATETIME(processed_timestamp, ''America/Los_Angeles''). Use this for all order date calculations, cohort analysis, and time-based metrics.'
+      description: 'Shopify order processed timestamp in UTC. This is Flooret''s CANONICAL order date field. Always convert to Pacific time: DATETIME(processed_timestamp, ''America/Los_Angeles''). Use this for all order date calculations, cohort analysis, and time-based metrics.'
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -587,7 +587,7 @@ sources:
         - year
         is_canonical_date: true
         timezone_conversion: DATETIME(processed_timestamp, 'America/Los_Angeles')
-        florret_usage: canonical_order_date
+        flooret_usage: canonical_order_date
     - name: updated_timestamp
       meta:
         semantic_type: time_dimension
@@ -603,23 +603,23 @@ sources:
         semantic_type: dimension
         cardinality: medium
     - name: customer_id
-      description: 'Shopify customer ID. Note: In Florret''s business logic, email (not customer_id) is the primary customer identifier because customer_id is NULL for guest checkouts. Use for joins to customer table, but use LOWER(email) for lifetime metrics.'
+      description: 'Shopify customer ID. Note: In Flooret''s business logic, email (not customer_id) is the primary customer identifier because customer_id is NULL for guest checkouts. Use for joins to customer table, but use LOWER(email) for lifetime metrics.'
       meta:
         semantic_type: identifier
         business_terms:
         - customer
         - user_id
-        florret_usage: secondary_identifier
+        flooret_usage: secondary_identifier
         use_instead: email for customer aggregations
     - name: email
-      description: 'Customer email address. CRITICAL: This is Florret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
+      description: 'Customer email address. CRITICAL: This is Flooret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
       meta:
         semantic_type: dimension
         cardinality: high
         business_terms:
         - customer_email
         - user_email
-        florret_usage: primary_customer_identifier
+        flooret_usage: primary_customer_identifier
         preprocessing: LOWER(email)
         exclusions:
         - email NOT LIKE '%amazon%'
@@ -814,7 +814,7 @@ sources:
         semantic_type: dimension
         cardinality: low
     - name: _fivetran_synced
-      description: Fivetran sync timestamp. Not used in Florret business logic.
+      description: Fivetran sync timestamp. Not used in Flooret business logic.
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -825,11 +825,11 @@ sources:
         - quarter
         - year
     - name: source_relation
-      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      description: 'Fivetran source identifier. Flooret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         stores:
           regular:
             threshold: 55
@@ -855,11 +855,11 @@ sources:
       meta:
         semantic_type: identifier
     - name: source_relation
-      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      description: 'Fivetran source identifier. Flooret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         stores:
           regular:
             threshold: 55
@@ -1034,7 +1034,7 @@ sources:
         - quarter
         - year
     - name: _fivetran_synced
-      description: Fivetran sync timestamp. Not used in Florret business logic.
+      description: Fivetran sync timestamp. Not used in Flooret business logic.
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -1045,11 +1045,11 @@ sources:
         - quarter
         - year
     - name: source_relation
-      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      description: 'Fivetran source identifier. Flooret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         stores:
           regular:
             threshold: 55
@@ -1093,13 +1093,13 @@ sources:
         - quarter
         - year
     - name: customer_id
-      description: 'Shopify customer ID. Note: In Florret''s business logic, email (not customer_id) is the primary customer identifier because customer_id is NULL for guest checkouts. Use for joins to customer table, but use LOWER(email) for lifetime metrics.'
+      description: 'Shopify customer ID. Note: In Flooret''s business logic, email (not customer_id) is the primary customer identifier because customer_id is NULL for guest checkouts. Use for joins to customer table, but use LOWER(email) for lifetime metrics.'
       meta:
         semantic_type: identifier
         business_terms:
         - customer
         - user_id
-        florret_usage: secondary_identifier
+        flooret_usage: secondary_identifier
         use_instead: email for customer aggregations
     - name: first_order_timestamp
       meta:
@@ -1122,11 +1122,11 @@ sources:
         - quarter
         - year
     - name: source_relation
-      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      description: 'Fivetran source identifier. Flooret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         stores:
           regular:
             threshold: 55
@@ -1211,14 +1211,14 @@ sources:
         - quarter
         - year
     - name: email
-      description: 'Customer email address. CRITICAL: This is Florret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
+      description: 'Customer email address. CRITICAL: This is Flooret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
       meta:
         semantic_type: dimension
         cardinality: high
         business_terms:
         - customer_email
         - user_email
-        florret_usage: primary_customer_identifier
+        flooret_usage: primary_customer_identifier
         preprocessing: LOWER(email)
         exclusions:
         - email NOT LIKE '%amazon%'
@@ -1244,11 +1244,11 @@ sources:
         - quarter
         - year
     - name: source_relation
-      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      description: 'Fivetran source identifier. Flooret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         stores:
           regular:
             threshold: 55
@@ -1323,24 +1323,24 @@ sources:
   - name: shopify_gql__customer_emails
     columns:
     - name: email
-      description: 'Customer email address. CRITICAL: This is Florret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
+      description: 'Customer email address. CRITICAL: This is Flooret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
       meta:
         semantic_type: dimension
         cardinality: high
         business_terms:
         - customer_email
         - user_email
-        florret_usage: primary_customer_identifier
+        flooret_usage: primary_customer_identifier
         preprocessing: LOWER(email)
         exclusions:
         - email NOT LIKE '%amazon%'
         - email IS NOT NULL for customer analysis
     - name: source_relation
-      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      description: 'Fivetran source identifier. Flooret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         stores:
           regular:
             threshold: 55
@@ -1364,7 +1364,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: customer_segmentation
+        flooret_usage: customer_segmentation
         extracts:
         - customer_group
         - customer_type
@@ -1565,23 +1565,23 @@ sources:
   - name: shopify_gql__customers
     columns:
     - name: customer_id
-      description: 'Shopify customer ID. Note: In Florret''s business logic, email (not customer_id) is the primary customer identifier because customer_id is NULL for guest checkouts. Use for joins to customer table, but use LOWER(email) for lifetime metrics.'
+      description: 'Shopify customer ID. Note: In Flooret''s business logic, email (not customer_id) is the primary customer identifier because customer_id is NULL for guest checkouts. Use for joins to customer table, but use LOWER(email) for lifetime metrics.'
       meta:
         semantic_type: identifier
         business_terms:
         - customer
         - user_id
-        florret_usage: secondary_identifier
+        flooret_usage: secondary_identifier
         use_instead: email for customer aggregations
     - name: email
-      description: 'Customer email address. CRITICAL: This is Florret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
+      description: 'Customer email address. CRITICAL: This is Flooret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
       meta:
         semantic_type: dimension
         cardinality: high
         business_terms:
         - customer_email
         - user_email
-        florret_usage: primary_customer_identifier
+        flooret_usage: primary_customer_identifier
         preprocessing: LOWER(email)
         exclusions:
         - email NOT LIKE '%amazon%'
@@ -1660,7 +1660,7 @@ sources:
         - quarter
         - year
     - name: _fivetran_synced
-      description: Fivetran sync timestamp. Not used in Florret business logic.
+      description: Fivetran sync timestamp. Not used in Flooret business logic.
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -1671,11 +1671,11 @@ sources:
         - quarter
         - year
     - name: source_relation
-      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      description: 'Fivetran source identifier. Flooret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         stores:
           regular:
             threshold: 55
@@ -1715,7 +1715,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: customer_segmentation
+        flooret_usage: customer_segmentation
         extracts:
         - customer_group
         - customer_type
@@ -1800,7 +1800,7 @@ sources:
     description: Shopify customers with lifetime metrics. Use email (lowercased) as primary identifier, not customer_id. Extract Customer Group and Customer Type from customer_tags.
     meta:
       primary_key: email (lowercased)
-      florret_usage: customer_analysis
+      flooret_usage: customer_analysis
   - name: shopify_gql__daily_shop
     columns:
     - name: date_day
@@ -1851,11 +1851,11 @@ sources:
         - quarter
         - year
     - name: source_relation
-      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      description: 'Fivetran source identifier. Flooret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         stores:
           regular:
             threshold: 55
@@ -2134,11 +2134,11 @@ sources:
   - name: shopify_gql__discounts
     columns:
     - name: source_relation
-      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      description: 'Fivetran source identifier. Flooret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         stores:
           regular:
             threshold: 55
@@ -2411,7 +2411,7 @@ sources:
         - quarter
         - year
     - name: _fivetran_synced
-      description: Fivetran sync timestamp. Not used in Florret business logic.
+      description: Fivetran sync timestamp. Not used in Flooret business logic.
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -2422,11 +2422,11 @@ sources:
         - quarter
         - year
     - name: source_relation
-      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      description: 'Fivetran source identifier. Flooret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         stores:
           regular:
             threshold: 55
@@ -2920,11 +2920,11 @@ sources:
         semantic_type: measure
         default_aggregation: sum
     - name: product_type
-      description: 'Shopify product type. Used in Florret''s product category derivation: if product_type = ''lvp'', apply special SKU pattern logic to extract category. See business_rules.md section 3.'
+      description: 'Shopify product type. Used in Flooret''s product category derivation: if product_type = ''lvp'', apply special SKU pattern logic to extract category. See business_rules.md section 3.'
       meta:
         semantic_type: dimension
         cardinality: low
-        florret_usage: product_categorization
+        flooret_usage: product_categorization
     - name: quantity
       description: Line item quantity. After classification, split into sample_quantity, product_quantity, accessories_quantity for aggregation to order level. These aggregates determine order type and customer status.
       meta:
@@ -2935,7 +2935,7 @@ sources:
         - qty
         - volume
         - units
-        florret_usage: quantity_breakdowns
+        flooret_usage: quantity_breakdowns
     - name: unit_amount
       meta:
         semantic_type: measure
@@ -3028,13 +3028,13 @@ sources:
         semantic_type: dimension
         cardinality: low
     - name: customer_id
-      description: 'Shopify customer ID. Note: In Florret''s business logic, email (not customer_id) is the primary customer identifier because customer_id is NULL for guest checkouts. Use for joins to customer table, but use LOWER(email) for lifetime metrics.'
+      description: 'Shopify customer ID. Note: In Flooret''s business logic, email (not customer_id) is the primary customer identifier because customer_id is NULL for guest checkouts. Use for joins to customer table, but use LOWER(email) for lifetime metrics.'
       meta:
         semantic_type: identifier
         business_terms:
         - customer
         - user_id
-        florret_usage: secondary_identifier
+        flooret_usage: secondary_identifier
         use_instead: email for customer aggregations
     - name: customer_created_at
       meta:
@@ -3074,11 +3074,11 @@ sources:
         semantic_type: dimension
         cardinality: medium
     - name: source_relation
-      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      description: 'Fivetran source identifier. Flooret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         stores:
           regular:
             threshold: 55
@@ -3118,7 +3118,7 @@ sources:
         default_aggregation: sum
         unit: USD
         format: currency
-        florret_usage: product_classification
+        flooret_usage: product_classification
         thresholds:
           regular_shopify: 55
           commercial_shopify: 40
@@ -3133,7 +3133,7 @@ sources:
         default_aggregation: sum
         unit: USD
         format: currency
-        florret_usage: product_classification
+        flooret_usage: product_classification
         thresholds:
           regular_shopify: 55
           commercial_shopify: 40
@@ -3154,7 +3154,7 @@ sources:
         - qty
         - volume
         - units
-        florret_usage: quantity_breakdowns
+        flooret_usage: quantity_breakdowns
     - name: is_shipping_required
       meta:
         semantic_type: dimension
@@ -3164,7 +3164,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: classification_and_categorization
+        flooret_usage: classification_and_categorization
         patterns:
         - 'sample_detection: CUT/FULL'
         - 'category: B/C/S extraction'
@@ -3173,11 +3173,11 @@ sources:
         semantic_type: dimension
         cardinality: low
     - name: title
-      description: 'Line item product title. CRITICAL for Florret''s three-way line item classification: Sample (contains ''Cut''/''Sample''/''Plank''), Product (price > threshold, NOT ''Nosing'', not Sample), Accessories (everything else). Also used for color extraction: REGEXP_EXTRACT(title, r''^(.+?)\s''). See business_rules.md sections 1-2, 10.'
+      description: 'Line item product title. CRITICAL for Flooret''s three-way line item classification: Sample (contains ''Cut''/''Sample''/''Plank''), Product (price > threshold, NOT ''Nosing'', not Sample), Accessories (everything else). Also used for color extraction: REGEXP_EXTRACT(title, r''^(.+?)\s''). See business_rules.md sections 1-2, 10.'
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: line_item_classification
+        flooret_usage: line_item_classification
         classification_logic:
         - sample_detection
         - product_exclusion
@@ -3214,7 +3214,7 @@ sources:
         semantic_type: dimension
         cardinality: medium
     - name: _fivetran_synced
-      description: Fivetran sync timestamp. Not used in Florret business logic.
+      description: Fivetran sync timestamp. Not used in Flooret business logic.
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -3225,11 +3225,11 @@ sources:
         - quarter
         - year
     - name: source_relation
-      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      description: 'Fivetran source identifier. Flooret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         stores:
           regular:
             threshold: 55
@@ -3398,9 +3398,9 @@ sources:
         - qty
         - volume
         - units
-    description: 'Shopify order line items with product/variant details. CRITICAL for Florret''s three-way classification: Sample, Product, Accessories. Apply classification logic early in staging layer using title, sku, and price fields.'
+    description: 'Shopify order line items with product/variant details. CRITICAL for Flooret''s three-way classification: Sample, Product, Accessories. Apply classification logic early in staging layer using title, sku, and price fields.'
     meta:
-      florret_usage: line_item_classification
+      flooret_usage: line_item_classification
       classification_fields:
       - title
       - sku
@@ -3447,7 +3447,7 @@ sources:
         - revenue
         - gmv
         - order_value
-        florret_usage: order_classification
+        flooret_usage: order_classification
         threshold: 250
     - name: total_price_pres_currency_code
       meta:
@@ -3470,7 +3470,7 @@ sources:
         - revenue
         - gmv
         - order_value
-        florret_usage: order_classification
+        flooret_usage: order_classification
         threshold: 250
     - name: total_price_shop_currency_code
       meta:
@@ -3506,7 +3506,7 @@ sources:
         semantic_type: dimension
         cardinality: high
     - name: subtotal_price_pres_amount
-      description: Order subtotal before tax. In Florret's business logic, this is 'net_sales' or 'sales' for revenue metrics. Used as the primary revenue field.
+      description: Order subtotal before tax. In Flooret's business logic, this is 'net_sales' or 'sales' for revenue metrics. Used as the primary revenue field.
       meta:
         semantic_type: measure
         default_aggregation: sum
@@ -3518,7 +3518,7 @@ sources:
         - gmv
         - order_value
         - net_sales
-        florret_usage: revenue_metric
+        flooret_usage: revenue_metric
     - name: subtotal_price_pres_currency_code
       meta:
         semantic_type: dimension
@@ -3529,7 +3529,7 @@ sources:
         - gmv
         - order_value
     - name: subtotal_price_shop_amount
-      description: Order subtotal before tax. In Florret's business logic, this is 'net_sales' or 'sales' for revenue metrics. Used as the primary revenue field.
+      description: Order subtotal before tax. In Flooret's business logic, this is 'net_sales' or 'sales' for revenue metrics. Used as the primary revenue field.
       meta:
         semantic_type: measure
         default_aggregation: sum
@@ -3541,7 +3541,7 @@ sources:
         - gmv
         - order_value
         - net_sales
-        florret_usage: revenue_metric
+        flooret_usage: revenue_metric
     - name: subtotal_price_shop_currency_code
       meta:
         semantic_type: dimension
@@ -3600,7 +3600,7 @@ sources:
         semantic_type: dimension
         cardinality: medium
     - name: created_timestamp
-      description: 'Shopify order creation timestamp in UTC. IMPORTANT: This is NOT the canonical order date field for Florret. Use processed_timestamp instead, which represents when the order was actually processed. Convert to Pacific time: DATETIME(processed_timestamp, ''America/Los_Angeles'').'
+      description: 'Shopify order creation timestamp in UTC. IMPORTANT: This is NOT the canonical order date field for Flooret. Use processed_timestamp instead, which represents when the order was actually processed. Convert to Pacific time: DATETIME(processed_timestamp, ''America/Los_Angeles'').'
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -3633,7 +3633,7 @@ sources:
         - quarter
         - year
     - name: processed_timestamp
-      description: 'Shopify order processed timestamp in UTC. This is Florret''s CANONICAL order date field. Always convert to Pacific time: DATETIME(processed_timestamp, ''America/Los_Angeles''). Use this for all order date calculations, cohort analysis, and time-based metrics.'
+      description: 'Shopify order processed timestamp in UTC. This is Flooret''s CANONICAL order date field. Always convert to Pacific time: DATETIME(processed_timestamp, ''America/Los_Angeles''). Use this for all order date calculations, cohort analysis, and time-based metrics.'
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -3645,7 +3645,7 @@ sources:
         - year
         is_canonical_date: true
         timezone_conversion: DATETIME(processed_timestamp, 'America/Los_Angeles')
-        florret_usage: canonical_order_date
+        flooret_usage: canonical_order_date
     - name: updated_timestamp
       meta:
         semantic_type: time_dimension
@@ -3661,23 +3661,23 @@ sources:
         semantic_type: dimension
         cardinality: medium
     - name: customer_id
-      description: 'Shopify customer ID. Note: In Florret''s business logic, email (not customer_id) is the primary customer identifier because customer_id is NULL for guest checkouts. Use for joins to customer table, but use LOWER(email) for lifetime metrics.'
+      description: 'Shopify customer ID. Note: In Flooret''s business logic, email (not customer_id) is the primary customer identifier because customer_id is NULL for guest checkouts. Use for joins to customer table, but use LOWER(email) for lifetime metrics.'
       meta:
         semantic_type: identifier
         business_terms:
         - customer
         - user_id
-        florret_usage: secondary_identifier
+        flooret_usage: secondary_identifier
         use_instead: email for customer aggregations
     - name: email
-      description: 'Customer email address. CRITICAL: This is Florret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
+      description: 'Customer email address. CRITICAL: This is Flooret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
       meta:
         semantic_type: dimension
         cardinality: high
         business_terms:
         - customer_email
         - user_email
-        florret_usage: primary_customer_identifier
+        flooret_usage: primary_customer_identifier
         preprocessing: LOWER(email)
         exclusions:
         - email NOT LIKE '%amazon%'
@@ -3872,7 +3872,7 @@ sources:
         semantic_type: dimension
         cardinality: low
     - name: _fivetran_synced
-      description: Fivetran sync timestamp. Not used in Florret business logic.
+      description: Fivetran sync timestamp. Not used in Flooret business logic.
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -3883,11 +3883,11 @@ sources:
         - quarter
         - year
     - name: source_relation
-      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      description: 'Fivetran source identifier. Flooret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         stores:
           regular:
             threshold: 55
@@ -4000,7 +4000,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: salesperson_extraction
+        flooret_usage: salesperson_extraction
         regex_pattern: 'Salesperson: (.*?),'
         defaults:
           regular_shopify: DTC
@@ -4031,10 +4031,10 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-    description: Shopify orders with Fivetran transformations. Core table for Florret's order analysis. Use processed_timestamp (not created_timestamp) as canonical date. Join to order_lines to get line item details for classification.
+    description: Shopify orders with Fivetran transformations. Core table for Flooret's order analysis. Use processed_timestamp (not created_timestamp) as canonical date. Join to order_lines to get line item details for classification.
     meta:
       canonical_date_field: processed_timestamp
-      florret_usage: order_analysis
+      flooret_usage: order_analysis
   - name: shopify_gql__products
     columns:
     - name: product_id
@@ -4045,11 +4045,11 @@ sources:
         semantic_type: dimension
         cardinality: medium
     - name: product_type
-      description: 'Shopify product type. Used in Florret''s product category derivation: if product_type = ''lvp'', apply special SKU pattern logic to extract category. See business_rules.md section 3.'
+      description: 'Shopify product type. Used in Flooret''s product category derivation: if product_type = ''lvp'', apply special SKU pattern logic to extract category. See business_rules.md section 3.'
       meta:
         semantic_type: dimension
         cardinality: low
-        florret_usage: product_categorization
+        flooret_usage: product_categorization
     - name: title
       meta:
         semantic_type: dimension
@@ -4097,7 +4097,7 @@ sources:
         - quarter
         - year
     - name: _fivetran_synced
-      description: Fivetran sync timestamp. Not used in Florret business logic.
+      description: Fivetran sync timestamp. Not used in Flooret business logic.
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -4108,11 +4108,11 @@ sources:
         - quarter
         - year
     - name: source_relation
-      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      description: 'Fivetran source identifier. Flooret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         stores:
           regular:
             threshold: 55
@@ -4332,7 +4332,7 @@ sources:
         - quarter
         - year
     - name: processed_timestamp
-      description: 'Shopify order processed timestamp in UTC. This is Florret''s CANONICAL order date field. Always convert to Pacific time: DATETIME(processed_timestamp, ''America/Los_Angeles''). Use this for all order date calculations, cohort analysis, and time-based metrics.'
+      description: 'Shopify order processed timestamp in UTC. This is Flooret''s CANONICAL order date field. Always convert to Pacific time: DATETIME(processed_timestamp, ''America/Los_Angeles''). Use this for all order date calculations, cohort analysis, and time-based metrics.'
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -4344,7 +4344,7 @@ sources:
         - year
         is_canonical_date: true
         timezone_conversion: DATETIME(processed_timestamp, 'America/Los_Angeles')
-        florret_usage: canonical_order_date
+        flooret_usage: canonical_order_date
     - name: authorization_expires_at
       meta:
         semantic_type: time_dimension
@@ -4356,7 +4356,7 @@ sources:
         - quarter
         - year
     - name: _fivetran_synced
-      description: Fivetran sync timestamp. Not used in Florret business logic.
+      description: Fivetran sync timestamp. Not used in Flooret business logic.
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -4367,11 +4367,11 @@ sources:
         - quarter
         - year
     - name: source_relation
-      description: 'Fivetran source identifier. Florret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
+      description: 'Fivetran source identifier. Flooret has TWO Shopify stores: Regular Shopify (consumer-focused, $55 product threshold, default salesperson ''DTC'') and Commercial Shopify (trade-focused, $40 product threshold, default salesperson ''Commercial''). Union both stores early with a ''store'' dimension, then apply store-specific logic via CASE.'
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         stores:
           regular:
             threshold: 55
@@ -4431,7 +4431,7 @@ sources:
   meta:
     platform: Shopify
     connector: Fivetran
-    florret_stores: 2
+    flooret_stores: 2
     primary_customer_id: email (lowercased)
     canonical_date: processed_timestamp
     timezone: America/Los_Angeles

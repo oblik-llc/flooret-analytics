@@ -1,7 +1,7 @@
 version: 2
 sources:
 - name: ft_shopify_commercial_shopify
-  description: 'Fivetran-synced Shopify data from ft_shopify_commercial_shopify dataset. This is Florret''s COMMERCIAL Shopify instance (trade-focused) with different business rules: $40 price threshold for Product classification (not $55), default salesperson ''Commercial'' (not ''DTC''). Contains both raw Shopify tables and Fivetran''s pre-built models (shopify_gql__*). Schema is identical to regular Shopify but business logic differs.'
+  description: 'Fivetran-synced Shopify data from ft_shopify_commercial_shopify dataset. This is Flooret''s COMMERCIAL Shopify instance (trade-focused) with different business rules: $40 price threshold for Product classification (not $55), default salesperson ''Commercial'' (not ''DTC''). Contains both raw Shopify tables and Fivetran''s pre-built models (shopify_gql__*). Schema is identical to regular Shopify but business logic differs.'
   tables:
   - name: int_shopify_gql__collection
     columns:
@@ -39,7 +39,7 @@ sources:
         - quarter
         - year
     - name: _fivetran_synced
-      description: Fivetran sync timestamp. Not used in Florret business logic.
+      description: Fivetran sync timestamp. Not used in Flooret business logic.
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -54,7 +54,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         commercial_store:
           threshold: 40
           salesperson: Commercial
@@ -72,23 +72,23 @@ sources:
   - name: int_shopify_gql__customer
     columns:
     - name: customer_id
-      description: 'Shopify customer ID. Note: In Florret''s business logic, email (not customer_id) is the primary customer identifier because customer_id is NULL for guest checkouts. Use for joins to customer table, but use LOWER(email) for lifetime metrics.'
+      description: 'Shopify customer ID. Note: In Flooret''s business logic, email (not customer_id) is the primary customer identifier because customer_id is NULL for guest checkouts. Use for joins to customer table, but use LOWER(email) for lifetime metrics.'
       meta:
         semantic_type: identifier
         business_terms:
         - customer
         - user_id
-        florret_usage: secondary_identifier
+        flooret_usage: secondary_identifier
         use_instead: email for customer aggregations
     - name: email
-      description: 'Customer email address. CRITICAL: This is Florret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
+      description: 'Customer email address. CRITICAL: This is Flooret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
       meta:
         semantic_type: dimension
         cardinality: high
         business_terms:
         - customer_email
         - user_email
-        florret_usage: primary_customer_identifier
+        flooret_usage: primary_customer_identifier
         preprocessing: LOWER(email)
         exclusions:
         - email NOT LIKE '%amazon%'
@@ -156,7 +156,7 @@ sources:
         - quarter
         - year
     - name: created_timestamp
-      description: 'Record creation timestamp. Note: processed_at (not created_at) is the canonical order timestamp in Florret''s business logic.'
+      description: 'Record creation timestamp. Note: processed_at (not created_at) is the canonical order timestamp in Flooret''s business logic.'
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -177,7 +177,7 @@ sources:
         - quarter
         - year
     - name: _fivetran_synced
-      description: Fivetran sync timestamp. Not used in Florret business logic.
+      description: Fivetran sync timestamp. Not used in Flooret business logic.
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -192,7 +192,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         commercial_store:
           threshold: 40
           salesperson: Commercial
@@ -209,14 +209,14 @@ sources:
   - name: int_shopify_gql__customer_email_rollup
     columns:
     - name: email
-      description: 'Customer email address. CRITICAL: This is Florret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
+      description: 'Customer email address. CRITICAL: This is Flooret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
       meta:
         semantic_type: dimension
         cardinality: high
         business_terms:
         - customer_email
         - user_email
-        florret_usage: primary_customer_identifier
+        flooret_usage: primary_customer_identifier
         preprocessing: LOWER(email)
         exclusions:
         - email NOT LIKE '%amazon%'
@@ -226,7 +226,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         commercial_store:
           threshold: 40
           salesperson: Commercial
@@ -249,7 +249,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: customer_segmentation
+        flooret_usage: customer_segmentation
         extracts:
         - customer_group
         - customer_type
@@ -391,7 +391,7 @@ sources:
         - revenue
         - gmv
         - order_value
-        florret_usage: order_classification
+        flooret_usage: order_classification
         threshold: 250
     - name: total_price_pres_currency_code
       meta:
@@ -414,7 +414,7 @@ sources:
         - revenue
         - gmv
         - order_value
-        florret_usage: order_classification
+        flooret_usage: order_classification
         threshold: 250
     - name: total_price_shop_currency_code
       meta:
@@ -452,7 +452,7 @@ sources:
         semantic_type: dimension
         cardinality: high
     - name: subtotal_price_pres_amount
-      description: Order subtotal before tax. Used interchangeably with 'net_sales' in Florret's business logic. After line item aggregation, compared with product_quantity to determine order type.
+      description: Order subtotal before tax. Used interchangeably with 'net_sales' in Flooret's business logic. After line item aggregation, compared with product_quantity to determine order type.
       meta:
         semantic_type: measure
         default_aggregation: sum
@@ -463,7 +463,7 @@ sources:
         - revenue
         - gmv
         - order_value
-        florret_usage: net_sales
+        flooret_usage: net_sales
         alias: net_sales
     - name: subtotal_price_pres_currency_code
       meta:
@@ -475,7 +475,7 @@ sources:
         - gmv
         - order_value
     - name: subtotal_price_shop_amount
-      description: Order subtotal before tax. Used interchangeably with 'net_sales' in Florret's business logic. After line item aggregation, compared with product_quantity to determine order type.
+      description: Order subtotal before tax. Used interchangeably with 'net_sales' in Flooret's business logic. After line item aggregation, compared with product_quantity to determine order type.
       meta:
         semantic_type: measure
         default_aggregation: sum
@@ -486,7 +486,7 @@ sources:
         - revenue
         - gmv
         - order_value
-        florret_usage: net_sales
+        flooret_usage: net_sales
         alias: net_sales
     - name: subtotal_price_shop_currency_code
       meta:
@@ -546,7 +546,7 @@ sources:
         semantic_type: dimension
         cardinality: medium
     - name: created_timestamp
-      description: 'Record creation timestamp. Note: processed_at (not created_at) is the canonical order timestamp in Florret''s business logic.'
+      description: 'Record creation timestamp. Note: processed_at (not created_at) is the canonical order timestamp in Flooret''s business logic.'
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -577,7 +577,7 @@ sources:
         - quarter
         - year
     - name: processed_timestamp
-      description: 'Order processed timestamp (UTC). CRITICAL: This is Florret''s canonical order timestamp (not created_at). Convert to Pacific time: DATETIME(processed_at, ''America/Los_Angeles''). Used to calculate first_sample_order_date, first_product_order_date, etc.'
+      description: 'Order processed timestamp (UTC). CRITICAL: This is Flooret''s canonical order timestamp (not created_at). Convert to Pacific time: DATETIME(processed_at, ''America/Los_Angeles''). Used to calculate first_sample_order_date, first_product_order_date, etc.'
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -587,7 +587,7 @@ sources:
         - month
         - quarter
         - year
-        florret_usage: canonical_order_timestamp
+        flooret_usage: canonical_order_timestamp
         timezone_conversion: DATETIME(processed_at, 'America/Los_Angeles')
         preference: Use over created_at
     - name: updated_timestamp
@@ -605,23 +605,23 @@ sources:
         semantic_type: dimension
         cardinality: medium
     - name: customer_id
-      description: 'Shopify customer ID. Note: In Florret''s business logic, email (not customer_id) is the primary customer identifier because customer_id is NULL for guest checkouts. Use for joins to customer table, but use LOWER(email) for lifetime metrics.'
+      description: 'Shopify customer ID. Note: In Flooret''s business logic, email (not customer_id) is the primary customer identifier because customer_id is NULL for guest checkouts. Use for joins to customer table, but use LOWER(email) for lifetime metrics.'
       meta:
         semantic_type: identifier
         business_terms:
         - customer
         - user_id
-        florret_usage: secondary_identifier
+        flooret_usage: secondary_identifier
         use_instead: email for customer aggregations
     - name: email
-      description: 'Customer email address. CRITICAL: This is Florret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
+      description: 'Customer email address. CRITICAL: This is Flooret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
       meta:
         semantic_type: dimension
         cardinality: high
         business_terms:
         - customer_email
         - user_email
-        florret_usage: primary_customer_identifier
+        flooret_usage: primary_customer_identifier
         preprocessing: LOWER(email)
         exclusions:
         - email NOT LIKE '%amazon%'
@@ -814,7 +814,7 @@ sources:
         semantic_type: dimension
         cardinality: low
     - name: _fivetran_synced
-      description: Fivetran sync timestamp. Not used in Florret business logic.
+      description: Fivetran sync timestamp. Not used in Flooret business logic.
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -829,7 +829,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         commercial_store:
           threshold: 40
           salesperson: Commercial
@@ -858,7 +858,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         commercial_store:
           threshold: 40
           salesperson: Commercial
@@ -951,7 +951,7 @@ sources:
         - revenue
         - gmv
         - order_value
-        florret_usage: product_classification
+        flooret_usage: product_classification
         commercial_threshold: 40
         regular_threshold: 55
     - name: sku
@@ -959,7 +959,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage:
+        flooret_usage:
         - line_item_classification
         - product_category
     - name: position
@@ -1020,7 +1020,7 @@ sources:
         semantic_type: dimension
         cardinality: medium
     - name: created_timestamp
-      description: 'Record creation timestamp. Note: processed_at (not created_at) is the canonical order timestamp in Florret''s business logic.'
+      description: 'Record creation timestamp. Note: processed_at (not created_at) is the canonical order timestamp in Flooret''s business logic.'
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -1041,7 +1041,7 @@ sources:
         - quarter
         - year
     - name: _fivetran_synced
-      description: Fivetran sync timestamp. Not used in Florret business logic.
+      description: Fivetran sync timestamp. Not used in Flooret business logic.
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -1056,7 +1056,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         commercial_store:
           threshold: 40
           salesperson: Commercial
@@ -1100,13 +1100,13 @@ sources:
         - quarter
         - year
     - name: customer_id
-      description: 'Shopify customer ID. Note: In Florret''s business logic, email (not customer_id) is the primary customer identifier because customer_id is NULL for guest checkouts. Use for joins to customer table, but use LOWER(email) for lifetime metrics.'
+      description: 'Shopify customer ID. Note: In Flooret''s business logic, email (not customer_id) is the primary customer identifier because customer_id is NULL for guest checkouts. Use for joins to customer table, but use LOWER(email) for lifetime metrics.'
       meta:
         semantic_type: identifier
         business_terms:
         - customer
         - user_id
-        florret_usage: secondary_identifier
+        flooret_usage: secondary_identifier
         use_instead: email for customer aggregations
     - name: first_order_timestamp
       meta:
@@ -1133,7 +1133,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         commercial_store:
           threshold: 40
           salesperson: Commercial
@@ -1217,14 +1217,14 @@ sources:
         - quarter
         - year
     - name: email
-      description: 'Customer email address. CRITICAL: This is Florret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
+      description: 'Customer email address. CRITICAL: This is Flooret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
       meta:
         semantic_type: dimension
         cardinality: high
         business_terms:
         - customer_email
         - user_email
-        florret_usage: primary_customer_identifier
+        flooret_usage: primary_customer_identifier
         preprocessing: LOWER(email)
         exclusions:
         - email NOT LIKE '%amazon%'
@@ -1254,7 +1254,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         commercial_store:
           threshold: 40
           salesperson: Commercial
@@ -1328,14 +1328,14 @@ sources:
   - name: shopify_gql__customer_emails
     columns:
     - name: email
-      description: 'Customer email address. CRITICAL: This is Florret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
+      description: 'Customer email address. CRITICAL: This is Flooret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
       meta:
         semantic_type: dimension
         cardinality: high
         business_terms:
         - customer_email
         - user_email
-        florret_usage: primary_customer_identifier
+        flooret_usage: primary_customer_identifier
         preprocessing: LOWER(email)
         exclusions:
         - email NOT LIKE '%amazon%'
@@ -1345,7 +1345,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         commercial_store:
           threshold: 40
           salesperson: Commercial
@@ -1368,7 +1368,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: customer_segmentation
+        flooret_usage: customer_segmentation
         extracts:
         - customer_group
         - customer_type
@@ -1565,23 +1565,23 @@ sources:
   - name: shopify_gql__customers
     columns:
     - name: customer_id
-      description: 'Shopify customer ID. Note: In Florret''s business logic, email (not customer_id) is the primary customer identifier because customer_id is NULL for guest checkouts. Use for joins to customer table, but use LOWER(email) for lifetime metrics.'
+      description: 'Shopify customer ID. Note: In Flooret''s business logic, email (not customer_id) is the primary customer identifier because customer_id is NULL for guest checkouts. Use for joins to customer table, but use LOWER(email) for lifetime metrics.'
       meta:
         semantic_type: identifier
         business_terms:
         - customer
         - user_id
-        florret_usage: secondary_identifier
+        flooret_usage: secondary_identifier
         use_instead: email for customer aggregations
     - name: email
-      description: 'Customer email address. CRITICAL: This is Florret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
+      description: 'Customer email address. CRITICAL: This is Flooret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
       meta:
         semantic_type: dimension
         cardinality: high
         business_terms:
         - customer_email
         - user_email
-        florret_usage: primary_customer_identifier
+        flooret_usage: primary_customer_identifier
         preprocessing: LOWER(email)
         exclusions:
         - email NOT LIKE '%amazon%'
@@ -1640,7 +1640,7 @@ sources:
         - quarter
         - year
     - name: created_timestamp
-      description: 'Record creation timestamp. Note: processed_at (not created_at) is the canonical order timestamp in Florret''s business logic.'
+      description: 'Record creation timestamp. Note: processed_at (not created_at) is the canonical order timestamp in Flooret''s business logic.'
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -1661,7 +1661,7 @@ sources:
         - quarter
         - year
     - name: _fivetran_synced
-      description: Fivetran sync timestamp. Not used in Florret business logic.
+      description: Fivetran sync timestamp. Not used in Flooret business logic.
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -1676,7 +1676,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         commercial_store:
           threshold: 40
           salesperson: Commercial
@@ -1711,7 +1711,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: customer_segmentation
+        flooret_usage: customer_segmentation
         extracts:
         - customer_group
         - customer_type
@@ -1833,7 +1833,7 @@ sources:
         semantic_type: dimension
         cardinality: medium
     - name: created_at
-      description: 'Record creation timestamp. Note: processed_at (not created_at) is the canonical order timestamp in Florret''s business logic.'
+      description: 'Record creation timestamp. Note: processed_at (not created_at) is the canonical order timestamp in Flooret''s business logic.'
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -1848,7 +1848,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         commercial_store:
           threshold: 40
           salesperson: Commercial
@@ -2112,7 +2112,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         commercial_store:
           threshold: 40
           salesperson: Commercial
@@ -2157,7 +2157,7 @@ sources:
         semantic_type: dimension
         cardinality: medium
     - name: created_at
-      description: 'Record creation timestamp. Note: processed_at (not created_at) is the canonical order timestamp in Florret''s business logic.'
+      description: 'Record creation timestamp. Note: processed_at (not created_at) is the canonical order timestamp in Flooret''s business logic.'
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -2337,7 +2337,7 @@ sources:
         semantic_type: dimension
         cardinality: medium
     - name: created_at
-      description: 'Record creation timestamp. Note: processed_at (not created_at) is the canonical order timestamp in Florret''s business logic.'
+      description: 'Record creation timestamp. Note: processed_at (not created_at) is the canonical order timestamp in Flooret''s business logic.'
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -2358,7 +2358,7 @@ sources:
         - quarter
         - year
     - name: _fivetran_synced
-      description: Fivetran sync timestamp. Not used in Florret business logic.
+      description: Fivetran sync timestamp. Not used in Flooret business logic.
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -2373,7 +2373,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         commercial_store:
           threshold: 40
           salesperson: Commercial
@@ -2385,7 +2385,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage:
+        flooret_usage:
         - line_item_classification
         - product_category
     - name: is_inventory_item_deleted
@@ -2837,7 +2837,7 @@ sources:
         semantic_type: dimension
         cardinality: low
     - name: created_at
-      description: 'Record creation timestamp. Note: processed_at (not created_at) is the canonical order timestamp in Florret''s business logic.'
+      description: 'Record creation timestamp. Note: processed_at (not created_at) is the canonical order timestamp in Flooret''s business logic.'
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -2875,7 +2875,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: low
-        florret_usage: product_category
+        flooret_usage: product_category
     - name: quantity
       description: Line item quantity. After classification, creates sample_quantity (if Sample), product_quantity (if Product), accessories_quantity (if Accessories). These drive order type classification and customer status.
       meta:
@@ -2886,7 +2886,7 @@ sources:
         - qty
         - volume
         - units
-        florret_usage: order_classification
+        flooret_usage: order_classification
         breakdowns:
         - sample_quantity
         - product_quantity
@@ -2983,13 +2983,13 @@ sources:
         semantic_type: dimension
         cardinality: low
     - name: customer_id
-      description: 'Shopify customer ID. Note: In Florret''s business logic, email (not customer_id) is the primary customer identifier because customer_id is NULL for guest checkouts. Use for joins to customer table, but use LOWER(email) for lifetime metrics.'
+      description: 'Shopify customer ID. Note: In Flooret''s business logic, email (not customer_id) is the primary customer identifier because customer_id is NULL for guest checkouts. Use for joins to customer table, but use LOWER(email) for lifetime metrics.'
       meta:
         semantic_type: identifier
         business_terms:
         - customer
         - user_id
-        florret_usage: secondary_identifier
+        flooret_usage: secondary_identifier
         use_instead: email for customer aggregations
     - name: customer_created_at
       meta:
@@ -3033,7 +3033,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         commercial_store:
           threshold: 40
           salesperson: Commercial
@@ -3098,7 +3098,7 @@ sources:
         - qty
         - volume
         - units
-        florret_usage: order_classification
+        flooret_usage: order_classification
         breakdowns:
         - sample_quantity
         - product_quantity
@@ -3112,7 +3112,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage:
+        flooret_usage:
         - line_item_classification
         - product_category
     - name: is_taxable
@@ -3124,7 +3124,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage:
+        flooret_usage:
         - line_item_classification
         - color_extraction
         commercial_threshold: 40
@@ -3161,7 +3161,7 @@ sources:
         semantic_type: dimension
         cardinality: medium
     - name: _fivetran_synced
-      description: Fivetran sync timestamp. Not used in Florret business logic.
+      description: Fivetran sync timestamp. Not used in Flooret business logic.
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -3176,7 +3176,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         commercial_store:
           threshold: 40
           salesperson: Commercial
@@ -3386,7 +3386,7 @@ sources:
         - revenue
         - gmv
         - order_value
-        florret_usage: order_classification
+        flooret_usage: order_classification
         threshold: 250
     - name: total_price_pres_currency_code
       meta:
@@ -3409,7 +3409,7 @@ sources:
         - revenue
         - gmv
         - order_value
-        florret_usage: order_classification
+        flooret_usage: order_classification
         threshold: 250
     - name: total_price_shop_currency_code
       meta:
@@ -3447,7 +3447,7 @@ sources:
         semantic_type: dimension
         cardinality: high
     - name: subtotal_price_pres_amount
-      description: Order subtotal before tax. Used interchangeably with 'net_sales' in Florret's business logic. After line item aggregation, compared with product_quantity to determine order type.
+      description: Order subtotal before tax. Used interchangeably with 'net_sales' in Flooret's business logic. After line item aggregation, compared with product_quantity to determine order type.
       meta:
         semantic_type: measure
         default_aggregation: sum
@@ -3458,7 +3458,7 @@ sources:
         - revenue
         - gmv
         - order_value
-        florret_usage: net_sales
+        flooret_usage: net_sales
         alias: net_sales
     - name: subtotal_price_pres_currency_code
       meta:
@@ -3470,7 +3470,7 @@ sources:
         - gmv
         - order_value
     - name: subtotal_price_shop_amount
-      description: Order subtotal before tax. Used interchangeably with 'net_sales' in Florret's business logic. After line item aggregation, compared with product_quantity to determine order type.
+      description: Order subtotal before tax. Used interchangeably with 'net_sales' in Flooret's business logic. After line item aggregation, compared with product_quantity to determine order type.
       meta:
         semantic_type: measure
         default_aggregation: sum
@@ -3481,7 +3481,7 @@ sources:
         - revenue
         - gmv
         - order_value
-        florret_usage: net_sales
+        flooret_usage: net_sales
         alias: net_sales
     - name: subtotal_price_shop_currency_code
       meta:
@@ -3541,7 +3541,7 @@ sources:
         semantic_type: dimension
         cardinality: medium
     - name: created_timestamp
-      description: 'Record creation timestamp. Note: processed_at (not created_at) is the canonical order timestamp in Florret''s business logic.'
+      description: 'Record creation timestamp. Note: processed_at (not created_at) is the canonical order timestamp in Flooret''s business logic.'
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -3572,7 +3572,7 @@ sources:
         - quarter
         - year
     - name: processed_timestamp
-      description: 'Order processed timestamp (UTC). CRITICAL: This is Florret''s canonical order timestamp (not created_at). Convert to Pacific time: DATETIME(processed_at, ''America/Los_Angeles''). Used to calculate first_sample_order_date, first_product_order_date, etc.'
+      description: 'Order processed timestamp (UTC). CRITICAL: This is Flooret''s canonical order timestamp (not created_at). Convert to Pacific time: DATETIME(processed_at, ''America/Los_Angeles''). Used to calculate first_sample_order_date, first_product_order_date, etc.'
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -3582,7 +3582,7 @@ sources:
         - month
         - quarter
         - year
-        florret_usage: canonical_order_timestamp
+        flooret_usage: canonical_order_timestamp
         timezone_conversion: DATETIME(processed_at, 'America/Los_Angeles')
         preference: Use over created_at
     - name: updated_timestamp
@@ -3600,23 +3600,23 @@ sources:
         semantic_type: dimension
         cardinality: medium
     - name: customer_id
-      description: 'Shopify customer ID. Note: In Florret''s business logic, email (not customer_id) is the primary customer identifier because customer_id is NULL for guest checkouts. Use for joins to customer table, but use LOWER(email) for lifetime metrics.'
+      description: 'Shopify customer ID. Note: In Flooret''s business logic, email (not customer_id) is the primary customer identifier because customer_id is NULL for guest checkouts. Use for joins to customer table, but use LOWER(email) for lifetime metrics.'
       meta:
         semantic_type: identifier
         business_terms:
         - customer
         - user_id
-        florret_usage: secondary_identifier
+        flooret_usage: secondary_identifier
         use_instead: email for customer aggregations
     - name: email
-      description: 'Customer email address. CRITICAL: This is Florret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
+      description: 'Customer email address. CRITICAL: This is Flooret''s PRIMARY customer identifier (not customer_id). Use lowercased email for all customer-level aggregations, lifetime metrics, and cohort analysis. Email handles guest checkouts (where customer_id is NULL) and cross-device behavior. Filter: email NOT LIKE ''%amazon%'' to exclude marketplace orders.'
       meta:
         semantic_type: dimension
         cardinality: high
         business_terms:
         - customer_email
         - user_email
-        florret_usage: primary_customer_identifier
+        flooret_usage: primary_customer_identifier
         preprocessing: LOWER(email)
         exclusions:
         - email NOT LIKE '%amazon%'
@@ -3809,7 +3809,7 @@ sources:
         semantic_type: dimension
         cardinality: low
     - name: _fivetran_synced
-      description: Fivetran sync timestamp. Not used in Florret business logic.
+      description: Fivetran sync timestamp. Not used in Flooret business logic.
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -3824,7 +3824,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         commercial_store:
           threshold: 40
           salesperson: Commercial
@@ -3975,7 +3975,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: low
-        florret_usage: product_category
+        flooret_usage: product_category
     - name: title
       meta:
         semantic_type: dimension
@@ -3994,7 +3994,7 @@ sources:
         semantic_type: dimension
         cardinality: low
     - name: created_timestamp
-      description: 'Record creation timestamp. Note: processed_at (not created_at) is the canonical order timestamp in Florret''s business logic.'
+      description: 'Record creation timestamp. Note: processed_at (not created_at) is the canonical order timestamp in Flooret''s business logic.'
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -4025,7 +4025,7 @@ sources:
         - quarter
         - year
     - name: _fivetran_synced
-      description: Fivetran sync timestamp. Not used in Florret business logic.
+      description: Fivetran sync timestamp. Not used in Flooret business logic.
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -4040,7 +4040,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         commercial_store:
           threshold: 40
           salesperson: Commercial
@@ -4249,7 +4249,7 @@ sources:
         semantic_type: dimension
         cardinality: medium
     - name: created_timestamp
-      description: 'Record creation timestamp. Note: processed_at (not created_at) is the canonical order timestamp in Florret''s business logic.'
+      description: 'Record creation timestamp. Note: processed_at (not created_at) is the canonical order timestamp in Flooret''s business logic.'
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -4260,7 +4260,7 @@ sources:
         - quarter
         - year
     - name: processed_timestamp
-      description: 'Order processed timestamp (UTC). CRITICAL: This is Florret''s canonical order timestamp (not created_at). Convert to Pacific time: DATETIME(processed_at, ''America/Los_Angeles''). Used to calculate first_sample_order_date, first_product_order_date, etc.'
+      description: 'Order processed timestamp (UTC). CRITICAL: This is Flooret''s canonical order timestamp (not created_at). Convert to Pacific time: DATETIME(processed_at, ''America/Los_Angeles''). Used to calculate first_sample_order_date, first_product_order_date, etc.'
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -4270,7 +4270,7 @@ sources:
         - month
         - quarter
         - year
-        florret_usage: canonical_order_timestamp
+        flooret_usage: canonical_order_timestamp
         timezone_conversion: DATETIME(processed_at, 'America/Los_Angeles')
         preference: Use over created_at
     - name: authorization_expires_at
@@ -4284,7 +4284,7 @@ sources:
         - quarter
         - year
     - name: _fivetran_synced
-      description: Fivetran sync timestamp. Not used in Florret business logic.
+      description: Fivetran sync timestamp. Not used in Flooret business logic.
       meta:
         semantic_type: time_dimension
         time_grains:
@@ -4299,7 +4299,7 @@ sources:
       meta:
         semantic_type: dimension
         cardinality: medium
-        florret_usage: store_identifier
+        flooret_usage: store_identifier
         commercial_store:
           threshold: 40
           salesperson: Commercial
