@@ -10,20 +10,31 @@ Every line item is classified into one of three categories based on title, SKU, 
 
 ### Sample
 A line item is a **Sample** if ANY of the following are true:
+- `sku` starts with 'SA-' (primary indicator for newer products)
+- `sku` starts with 'KIT' (sample kits)
 - `title` contains 'Cut'
 - `title` contains 'Sample'
 - `title` contains 'Plank'
 - `sku` contains 'CUT'
 - `sku` contains 'FULL'
 
+**Note:** SKU prefix patterns (SA-, KIT) are the primary indicators for newer products. Some data imports or older products might not follow these patterns, so the title/SKU substring rules serve as fallback identification methods.
+
 ### Product
 A line item is a **Product** if:
-- `price > 55` (regular Shopify) OR `price > 40` (commercial Shopify)
+- `sku` starts with 'FL-' (primary indicator for newer products)
+- OR (`price > 55` (regular Shopify) OR `price > 40` (commercial Shopify))
 - AND `title` does NOT contain 'Nosing'
 - AND it doesn't qualify as a Sample (above rules)
 
+**Note:** SKU prefix pattern (FL-) is the primary indicator for newer products. Some data imports or older products might not follow this pattern, so the price-based rule serves as a fallback identification method.
+
 ### Accessories/Other
-Everything else that doesn't qualify as Sample or Product.
+A line item is **Accessories/Other** if:
+- `sku` starts with 'AC-' (primary indicator for newer products)
+- OR it doesn't qualify as Sample or Product (above rules)
+
+**Note:** SKU prefix pattern (AC-) is the primary indicator for newer products. Some data imports or older products might not follow this pattern, so items that don't match Sample or Product rules serve as a fallback.
 
 ---
 

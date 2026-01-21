@@ -3160,20 +3160,22 @@ sources:
         semantic_type: dimension
         cardinality: low
     - name: sku
-      description: 'Product SKU. Used in line item classification (Sample if contains ''CUT''/''FULL'') and product category derivation. Complex SKU pattern matching extracts B/C/S codes and maps to product lines: Base, Signature, Craftsman, Silvan Hardwood. See business_rules.md sections 1-3.'
+      description: 'Product SKU. Used in Line Item Classification: Samples start with ''SA-'' or ''KIT'' (or contain ''CUT''/''FULL'' for legacy); Products start with ''FL-'' (or price-based for legacy); Accessories start with ''AC-'' (or fallback for legacy). Also used in product category derivation. Complex SKU pattern matching extracts B/C/S codes and maps to product lines: Base, Signature, Craftsman, Silvan Hardwood. See business_rules.md sections 1-3.'
       meta:
         semantic_type: dimension
         cardinality: medium
         flooret_usage: classification_and_categorization
         patterns:
-        - 'sample_detection: CUT/FULL'
+        - 'sample_detection: SA-, KIT prefix (primary); CUT/FULL substring (legacy)'
+        - 'product_detection: FL- prefix (primary)'
+        - 'accessories_detection: AC- prefix (primary)'
         - 'category: B/C/S extraction'
     - name: is_taxable
       meta:
         semantic_type: dimension
         cardinality: low
     - name: title
-      description: 'Line item product title. CRITICAL for Flooret''s three-way line item classification: Sample (contains ''Cut''/''Sample''/''Plank''), Product (price > threshold, NOT ''Nosing'', not Sample), Accessories (everything else). Also used for color extraction: REGEXP_EXTRACT(title, r''^(.+?)\s''). See business_rules.md sections 1-2, 10.'
+      description: 'Line item product title. Used as fallback in Flooret''s three-way line item classification (primary: SKU prefix SA-/KIT/FL-/AC-; legacy fallback: title contains ''Cut''/''Sample''/''Plank'' for Samples, price threshold for Products). Also used for color extraction: REGEXP_EXTRACT(title, r''^(.+?)\s''). See business_rules.md sections 1-2, 10.'
       meta:
         semantic_type: dimension
         cardinality: medium
