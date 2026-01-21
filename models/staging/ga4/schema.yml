@@ -1,0 +1,47 @@
+version: 2
+
+models:
+  - name: stg_ga4__events
+    description: GA4 events with flattened event parameters and e-commerce tracking
+    columns:
+      - name: event_date
+        description: Event date in YYYYMMDD format
+        tests:
+          - not_null
+
+      - name: event_name
+        description: Event name (page_view, purchase, add_to_cart, etc.)
+        tests:
+          - not_null
+
+      - name: event_timestamp_pt
+        description: Event timestamp in Pacific timezone
+        tests:
+          - not_null
+
+      - name: user_pseudo_id
+        description: Cookie-based user identifier
+
+      - name: ga_session_id
+        description: Session identifier
+
+      - name: page_location
+        description: Full page URL
+
+      - name: page_type
+        description: Classified page type (homepage, product_detail, cart, checkout, etc.)
+
+      - name: transaction_id
+        description: Order ID for purchase events
+
+      - name: transaction_value
+        description: Order value for purchase events
+
+      - name: is_purchase
+        description: Boolean flag for purchase events
+
+      - name: is_add_to_cart
+        description: Boolean flag for add to cart events
+
+      - name: is_begin_checkout
+        description: Boolean flag for checkout started events

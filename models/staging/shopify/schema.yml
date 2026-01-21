@@ -1,0 +1,102 @@
+version: 2
+
+models:
+  - name: stg_shopify__orders
+    description: Shopify orders from both regular and commercial stores, unified with store dimension
+    columns:
+      - name: order_id
+        description: Unique order identifier
+        tests:
+          - unique
+          - not_null
+
+      - name: email
+        description: Customer email (lowercased, primary customer identifier)
+        tests:
+          - not_null
+
+      - name: processed_at
+        description: Order processed timestamp in Pacific timezone (canonical order date)
+        tests:
+          - not_null
+
+      - name: store
+        description: Store identifier (regular or commercial)
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['regular', 'commercial']
+
+      - name: subtotal_price
+        description: Order subtotal before tax (primary revenue metric)
+
+      - name: salesperson
+        description: Salesperson extracted from tags, defaults to store default
+
+  - name: stg_shopify__order_lines
+    description: Shopify order line items with Flooret line item classification logic applied
+    columns:
+      - name: order_line_id
+        description: Unique line item identifier
+        tests:
+          - unique
+          - not_null
+
+      - name: order_id
+        description: Foreign key to orders
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_shopify__orders')
+              field: order_id
+
+      - name: line_item_type
+        description: Line item classification (Sample, Product, Accessories)
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Sample', 'Product', 'Accessories']
+
+      - name: store
+        description: Store identifier for price threshold logic
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['regular', 'commercial']
+
+      - name: sample_quantity
+        description: Quantity if Sample, else 0
+
+      - name: product_quantity
+        description: Quantity if Product, else 0
+
+      - name: accessories_quantity
+        description: Quantity if Accessories, else 0
+
+  - name: stg_shopify__customers
+    description: Shopify customers deduplicated by email across both stores
+    columns:
+      - name: email
+        description: Customer email (lowercased, primary customer identifier)
+        tests:
+          - unique
+          - not_null
+
+      - name: customer_group
+        description: Customer group (Retail, Trade Rewards, Pending Trade Rewards)
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Retail', 'Trade Rewards', 'Pending Trade Rewards']
+
+      - name: customer_type
+        description: Customer type extracted from tags, defaults to DTC
+        tests:
+          - not_null
+
+      - name: store
+        description: Store where customer record is from (after deduplication)
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['regular', 'commercial']

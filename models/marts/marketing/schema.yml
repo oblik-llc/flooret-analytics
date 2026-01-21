@@ -1,0 +1,137 @@
+version: 2
+
+models:
+  - name: fct_ad_performance
+    description: Daily ad performance by channel with calculated metrics
+    columns:
+      - name: date_day
+        description: Performance date
+        tests:
+          - not_null
+
+      - name: channel
+        description: Ad channel
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Facebook', 'Google']
+
+      - name: campaign_id
+        description: Campaign identifier
+        tests:
+          - not_null
+
+      - name: campaign_name
+        description: Campaign name
+
+      - name: spend
+        description: Ad spend
+
+      - name: conversions
+        description: Number of conversions
+
+      - name: conversions_value
+        description: Value of conversions
+
+      - name: roas
+        description: Return on ad spend
+
+      - name: cpa
+        description: Cost per acquisition
+
+  - name: fct_email_performance
+    description: Email campaign and flow performance metrics
+    columns:
+      - name: email_id
+        description: Unique email identifier (campaign_id or flow_id)
+        tests:
+          - unique
+          - not_null
+
+      - name: email_type
+        description: Email type
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Campaign', 'Flow']
+
+      - name: email_name
+        description: Email name
+
+      - name: email_category
+        description: Classified email category
+        tests:
+          - not_null
+
+      - name: recipients
+        description: Number of recipients
+
+      - name: open_rate
+        description: Open rate percentage
+
+      - name: click_rate
+        description: Click rate percentage
+
+      - name: conversion_rate
+        description: Conversion rate percentage
+
+      - name: revenue
+        description: Attributed revenue
+
+      - name: net_revenue
+        description: Revenue minus refunds and cancellations
+
+      - name: channel
+        description: Channel identifier
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Email']
+
+  - name: fct_ga4_funnel
+    description: Daily website funnel metrics with conversion and dropoff rates
+    columns:
+      - name: session_date
+        description: Date of sessions
+        tests:
+          - not_null
+
+      - name: deepest_funnel_stage
+        description: Deepest stage reached in funnel
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Homepage', 'Product List', 'Product Detail', 'Add to Cart', 'Begin Checkout', 'Purchase', 'Other']
+
+      - name: total_sessions
+        description: Total sessions reaching this stage
+
+      - name: unique_users
+        description: Unique users in sessions
+
+      - name: converted_sessions
+        description: Sessions that resulted in purchase
+
+      - name: overall_conversion_rate
+        description: Overall conversion rate (%)
+
+      - name: homepage_to_plp_rate
+        description: Conversion rate from homepage to PLP (%)
+
+      - name: plp_to_pdp_rate
+        description: Conversion rate from PLP to PDP (%)
+
+      - name: pdp_to_cart_rate
+        description: Conversion rate from PDP to cart (%)
+
+      - name: cart_to_checkout_rate
+        description: Conversion rate from cart to checkout (%)
+
+      - name: checkout_to_purchase_rate
+        description: Conversion rate from checkout to purchase (%)
+
+      - name: total_revenue
+        description: Total revenue from converted sessions
+
+      - name: avg_order_value
+        description: Average order value for converted sessions

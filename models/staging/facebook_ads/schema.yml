@@ -1,0 +1,51 @@
+version: 2
+
+models:
+  - name: stg_facebook_ads__ad_report
+    description: Daily Facebook/Instagram ad performance with calculated metrics
+    columns:
+      - name: date_day
+        description: Date of performance metrics
+        tests:
+          - not_null
+
+      - name: ad_id
+        description: Unique ad identifier
+        tests:
+          - not_null
+
+      - name: campaign_id
+        description: Campaign identifier
+        tests:
+          - not_null
+
+      - name: campaign_name
+        description: Campaign name
+
+      - name: spend
+        description: Amount spent on ads
+
+      - name: conversions
+        description: Number of conversions
+
+      - name: conversions_value
+        description: Value of conversions
+
+      - name: channel
+        description: Ad channel identifier
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Facebook']
+
+      - name: ctr
+        description: Click-through rate (clicks / impressions * 100)
+
+      - name: cpc
+        description: Cost per click
+
+      - name: roas
+        description: Return on ad spend (conversions_value / spend)
+
+      - name: cpa
+        description: Cost per acquisition (spend / conversions)

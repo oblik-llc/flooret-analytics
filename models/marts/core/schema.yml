@@ -1,0 +1,372 @@
+version: 2
+
+models:
+  - name: fct_orders
+    description: Order-level fact table with lifetime metrics and customer funnel context
+    columns:
+      - name: order_id
+        description: Unique order identifier
+        tests:
+          - unique
+          - not_null
+
+      - name: email
+        description: Customer email
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customers')
+              field: email
+
+      - name: order_date
+        description: Order date in Pacific timezone
+        tests:
+          - not_null
+
+      - name: order_type
+        description: Order classification
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Product Order', 'Sample Order', 'Accessory Only', 'Other']
+
+      - name: store
+        description: Store identifier
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['regular', 'commercial']
+
+      - name: net_sales
+        description: Order net sales (primary revenue metric)
+
+      - name: lifetime_product_revenue
+        description: Cumulative product revenue at time of this order
+
+      - name: customer_status
+        description: Customer status at time of order
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['New Customer', 'New Customer Sample', 'Returning Sample', 'Returning Customer', 'Other']
+
+  - name: fct_order_lines
+    description: Line item-level fact table with order context and customer funnel
+    columns:
+      - name: order_line_id
+        description: Unique line item identifier
+        tests:
+          - unique
+          - not_null
+
+      - name: order_id
+        description: Foreign key to fct_orders
+        tests:
+          - not_null
+          - relationships:
+              to: ref('fct_orders')
+              field: order_id
+
+      - name: email
+        description: Customer email
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customers')
+              field: email
+
+      - name: sku
+        description: Product SKU
+
+      - name: line_item_type
+        description: Line item classification
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Sample', 'Product', 'Accessories']
+
+      - name: color
+        description: Product color extracted from title
+
+      - name: is_converted_purchase
+        description: Boolean flag for purchases after sampling
+
+  - name: dim_customers
+    description: Customer dimension with lifetime metrics and funnel status
+    columns:
+      - name: email
+        description: Customer email (primary key)
+        tests:
+          - unique
+          - not_null
+
+      - name: customer_group
+        description: Customer group
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Retail', 'Trade Rewards', 'Pending Trade Rewards']
+
+      - name: customer_type
+        description: Customer type
+        tests:
+          - not_null
+
+      - name: first_sample_order_date
+        description: Date of first sample order
+
+      - name: first_product_order_date
+        description: Date of first product order
+
+      - name: days_to_order
+        description: Days from first sample to first product order
+
+      - name: lifetime_product_revenue
+        description: Total lifetime product revenue
+
+      - name: lifetime_total_revenue
+        description: Total lifetime revenue (all order types)
+
+      - name: conversion_ind
+        description: Boolean flag indicating if customer converted from sample to product
+
+      - name: customer_segment
+        description: Customer value segment
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['High Value', 'Medium Value', 'Low Value', 'Sample Only', 'No Purchase']
+
+  - name: fct_sample_conversions
+    description: Sample-to-purchase funnel with conversion timing and revenue metrics
+    columns:
+      - name: email
+        description: Customer email (primary key)
+        tests:
+          - unique
+          - not_null
+          - relationships:
+              to: ref('dim_customers')
+              field: email
+
+      - name: first_sample_order_date
+        description: Date of first sample order
+        tests:
+          - not_null
+
+      - name: first_product_order_date
+        description: Date of first product order (null if no conversion)
+
+      - name: days_to_order
+        description: Days from first sample to first product order
+
+      - name: conversion_ind
+        description: Boolean flag for conversion
+        tests:
+          - not_null
+
+      - name: sample_order_type
+        description: Classification of sample orders
+        tests:
+          - not_null
+
+      - name: cohort_month
+        description: Cohort month (first sample order month)
+
+      - name: conversion_window_bucket
+        description: Time-based conversion bucket
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['No Conversion', '0-15 days', '16-30 days', '31-60 days', '61-120 days', '120+ days']
+
+      - name: product_orders_within_60d
+        description: Count of product orders within 60 days of first sample
+
+  - name: fct_daily_performance
+    description: Daily aggregated performance metrics with ad spend and CAC/ROAS
+    columns:
+      - name: date_day
+        description: Performance date
+        tests:
+          - not_null
+
+      - name: store
+        description: Store identifier
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['regular', 'commercial']
+
+      - name: total_orders
+        description: Total orders for the day
+
+      - name: product_orders
+        description: Product orders for the day
+
+      - name: total_revenue
+        description: Total revenue for the day
+
+      - name: product_revenue
+        description: Product revenue for the day
+
+      - name: total_ad_spend
+        description: Total ad spend (Facebook + Google)
+
+      - name: cac
+        description: Customer acquisition cost (ad spend / new customers)
+
+      - name: roas
+        description: Return on ad spend (revenue / ad spend)
+
+      - name: new_customers
+        description: New customers acquired
+
+      - name: returning_customers
+        description: Returning customers
+
+  - name: fct_weekly_product_sales
+    description: Weekly product sales aggregated by SKU
+    columns:
+      - name: week_start_date
+        description: Week start date
+        tests:
+          - not_null
+
+      - name: sku
+        description: Product SKU
+        tests:
+          - not_null
+
+      - name: line_item_type
+        description: Line item type
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Sample', 'Product', 'Accessories']
+
+      - name: store
+        description: Store identifier
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['regular', 'commercial']
+
+      - name: total_quantity
+        description: Total units sold
+
+      - name: total_revenue
+        description: Total revenue
+
+      - name: order_count
+        description: Number of orders containing this SKU
+
+      - name: unique_customers
+        description: Number of unique customers who purchased this SKU
+
+      - name: converted_purchases
+        description: Number of purchases after sampling this product
+
+  - name: fct_monthly_cohorts
+    description: Monthly customer cohort retention and LTV analysis
+    columns:
+      - name: cohort_month
+        description: First product order month (cohort identifier)
+        tests:
+          - not_null
+
+      - name: store
+        description: Store identifier
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['regular', 'commercial']
+
+      - name: months_since_first_order
+        description: Months since cohort month (0 = first month)
+        tests:
+          - not_null
+
+      - name: cohort_size
+        description: Number of customers in cohort
+
+      - name: active_customers
+        description: Customers who ordered in this relative month
+
+      - name: retention_rate
+        description: Retention rate (active_customers / cohort_size * 100)
+
+      - name: cohort_revenue
+        description: Total revenue from cohort in this month
+
+      - name: cumulative_ltv
+        description: Cumulative lifetime value up to this month
+
+      - name: cumulative_ltv_per_customer
+        description: Cumulative LTV divided by cohort size
+
+      - name: calendar_month
+        description: Actual calendar month for time series visualization
+
+  - name: fct_unit_economics
+    description: Order-level unit economics with contribution margin before COGS (YELLOW metric - COGS not available)
+    columns:
+      - name: order_id
+        description: Unique order identifier
+        tests:
+          - unique
+          - not_null
+
+      - name: email
+        description: Customer email
+        tests:
+          - not_null
+
+      - name: order_date
+        description: Order date
+        tests:
+          - not_null
+
+      - name: store
+        description: Store identifier
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['regular', 'commercial']
+
+      - name: order_type
+        description: Order classification
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Product Order']
+
+      - name: gross_revenue
+        description: Revenue before discounts
+
+      - name: discount_amount
+        description: Total discounts applied
+
+      - name: net_sales
+        description: Revenue after discounts
+
+      - name: shipping_cost
+        description: Shipping cost from Freightview
+
+      - name: allocated_ad_spend
+        description: Ad spend allocated to new customers
+
+      - name: total_variable_costs
+        description: Shipping + ad spend
+
+      - name: contribution_margin_before_cogs
+        description: Net sales - variable costs (DOES NOT include COGS)
+
+      - name: contribution_margin_pct
+        description: Contribution margin as percentage of net sales
+
+      - name: shipping_cost_pct
+        description: Shipping cost as percentage of net sales
+
+      - name: ad_spend_pct
+        description: Ad spend as percentage of net sales

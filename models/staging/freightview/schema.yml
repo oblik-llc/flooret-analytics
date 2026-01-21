@@ -1,0 +1,41 @@
+version: 2
+
+models:
+  - name: stg_freightview__shipments
+    description: Freightview shipments with carrier performance metrics
+    columns:
+      - name: shipment_id
+        description: Unique shipment identifier
+        tests:
+          - unique
+          - not_null
+
+      - name: status
+        description: Shipment status
+
+      - name: carrier
+        description: Carrier name
+
+      - name: shipping_cost
+        description: Final shipping cost (invoiced or quoted)
+
+      - name: actual_transit_days
+        description: Actual days from pickup to delivery
+
+      - name: estimated_transit_days
+        description: Carrier's estimated transit days
+
+      - name: is_on_time
+        description: Boolean flag indicating if shipment was delivered on time
+
+      - name: cost_variance
+        description: Difference between invoiced and quoted amount
+
+      - name: transit_variance_days
+        description: Difference between actual and estimated transit days
+
+      - name: origin_state
+        description: Origin state/province
+
+      - name: destination_state
+        description: Destination state/province

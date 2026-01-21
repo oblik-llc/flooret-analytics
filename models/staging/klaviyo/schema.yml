@@ -1,0 +1,87 @@
+version: 2
+
+models:
+  - name: stg_klaviyo__campaigns
+    description: Klaviyo email campaign performance with calculated engagement rates
+    columns:
+      - name: campaign_id
+        description: Unique campaign identifier
+        tests:
+          - unique
+          - not_null
+
+      - name: campaign_name
+        description: Campaign name
+
+      - name: sent_at
+        description: Campaign send timestamp
+
+      - name: recipients
+        description: Number of unique recipients
+
+      - name: open_rate
+        description: Unique open rate percentage
+
+      - name: click_rate
+        description: Unique click rate percentage
+
+      - name: conversion_rate
+        description: Conversion rate percentage (converters / recipients)
+
+      - name: revenue
+        description: Attributed revenue from Placed Order events
+
+      - name: channel
+        description: Channel identifier
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Email']
+
+      - name: campaign_category
+        description: Classified campaign type
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Welcome Series', 'Cart Abandonment', 'Sample Nurture', 'Winback', 'Promotion', 'Newsletter', 'Other']
+
+  - name: stg_klaviyo__flows
+    description: Klaviyo automated flow performance with calculated engagement rates
+    columns:
+      - name: flow_id
+        description: Unique flow identifier
+        tests:
+          - unique
+          - not_null
+
+      - name: flow_name
+        description: Flow name
+
+      - name: recipients
+        description: Number of unique recipients
+
+      - name: open_rate
+        description: Unique open rate percentage
+
+      - name: click_rate
+        description: Unique click rate percentage
+
+      - name: conversion_rate
+        description: Conversion rate percentage
+
+      - name: revenue
+        description: Attributed revenue from Placed Order events
+
+      - name: channel
+        description: Channel identifier
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Email']
+
+      - name: flow_category
+        description: Classified flow type
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Welcome Series', 'Cart Abandonment', 'Browse Abandonment', 'Sample Nurture', 'Post-Purchase', 'Winback', 'Lifecycle', 'Other']

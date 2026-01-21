@@ -1,0 +1,189 @@
+version: 2
+
+models:
+  - name: int_order_classification
+    description: Orders with line items aggregated and order type classification applied
+    columns:
+      - name: order_id
+        description: Unique order identifier
+        tests:
+          - unique
+          - not_null
+
+      - name: email
+        description: Customer email (lowercased)
+        tests:
+          - not_null
+
+      - name: order_type
+        description: Order classification (Product Order, Sample Order, Accessory Only, Other)
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Product Order', 'Sample Order', 'Accessory Only', 'Other']
+
+      - name: is_product_order
+        description: Boolean flag for product orders (product_quantity > 0 AND subtotal > $250)
+
+      - name: is_sample_order
+        description: Boolean flag for sample orders (sample_quantity > 0 AND product_quantity = 0)
+
+      - name: sample_quantity
+        description: Total sample quantity in order
+
+      - name: product_quantity
+        description: Total product quantity in order
+
+      - name: net_sales
+        description: Order net sales (subtotal_price)
+
+  - name: int_customer_lifetime_metrics
+    description: Orders enriched with customer lifetime metrics (running totals partitioned by email)
+    columns:
+      - name: order_id
+        description: Unique order identifier
+        tests:
+          - unique
+          - not_null
+
+      - name: email
+        description: Customer email
+        tests:
+          - not_null
+
+      - name: lifetime_product_orders
+        description: Cumulative product orders for customer up to this order
+
+      - name: lifetime_product_revenue
+        description: Cumulative product revenue for customer up to this order
+
+      - name: lifetime_total_orders
+        description: Cumulative total orders for customer up to this order
+
+      - name: order_sequence_number
+        description: Order number in customer's purchase history (1 = first order)
+        tests:
+          - not_null
+
+      - name: is_first_order
+        description: Boolean flag for customer's first order
+
+      - name: is_first_product_order
+        description: Boolean flag for customer's first product order
+
+  - name: int_customer_funnel
+    description: Customer-level funnel tracking sample to product conversion
+    columns:
+      - name: email
+        description: Customer email (primary key)
+        tests:
+          - unique
+          - not_null
+
+      - name: first_sample_order_date
+        description: Date of customer's first sample-only order
+
+      - name: first_product_order_date
+        description: Date of customer's first product order
+
+      - name: days_to_order
+        description: Days from first sample to first product order
+
+      - name: converted_within_15d
+        description: Boolean flag for conversion within 15 days
+
+      - name: converted_within_30d
+        description: Boolean flag for conversion within 30 days
+
+      - name: converted_within_60d
+        description: Boolean flag for conversion within 60 days
+
+      - name: converted_within_120d
+        description: Boolean flag for conversion within 120 days
+
+      - name: conversion_ind
+        description: Boolean flag indicating if customer ever purchased product
+
+      - name: sample_order_type
+        description: Classification of sample orders by product category
+
+  - name: int_ga4_funnel
+    description: Session-level website funnel tracking with conversion and dropoff analysis
+    columns:
+      - name: user_pseudo_id
+        description: GA4 cookie-based user identifier
+        tests:
+          - not_null
+
+      - name: ga_session_id
+        description: GA4 session identifier
+        tests:
+          - not_null
+
+      - name: session_date
+        description: Date of session start
+        tests:
+          - not_null
+
+      - name: deepest_funnel_stage
+        description: Deepest stage reached in the funnel
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Homepage', 'Product List', 'Product Detail', 'Add to Cart', 'Begin Checkout', 'Purchase', 'Other']
+
+      - name: funnel_stage_depth
+        description: Numeric depth (0-6, higher = deeper in funnel)
+        tests:
+          - not_null
+
+      - name: is_converted_session
+        description: Boolean flag for sessions that resulted in purchase
+
+      - name: transaction_id
+        description: Shopify order identifier for converted sessions
+
+      - name: transaction_value
+        description: Order value for converted sessions
+
+  - name: int_demand_forecast_prep
+    description: Time series data prepared for demand forecasting models with seasonality and trend features
+    columns:
+      - name: date_day
+        description: Daily grain date
+        tests:
+          - not_null
+
+      - name: store
+        description: Store identifier (regular or commercial)
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['regular', 'commercial']
+
+      - name: sku
+        description: Product SKU
+        tests:
+          - not_null
+
+      - name: line_item_type
+        description: Line item type (should be Product for forecasting)
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Product']
+
+      - name: quantity_sold
+        description: Units sold on this day
+
+      - name: revenue
+        description: Revenue generated on this day
+
+      - name: day_of_week
+        description: Day of week (1=Sunday, 7=Saturday)
+
+      - name: is_weekend
+        description: Boolean flag for weekend days
+
+      - name: is_holiday_week
+        description: Boolean flag for major holiday weeks

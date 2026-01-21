@@ -1,0 +1,43 @@
+version: 2
+
+models:
+  - name: fct_shipments
+    description: Shipment performance with carrier metrics and on-time delivery
+    columns:
+      - name: shipment_id
+        description: Unique shipment identifier
+        tests:
+          - unique
+          - not_null
+
+      - name: pickup_date
+        description: Pickup date
+        tests:
+          - not_null
+
+      - name: carrier
+        description: Carrier name
+
+      - name: shipping_cost
+        description: Final shipping cost
+
+      - name: estimated_transit_days
+        description: Carrier's estimated transit days
+
+      - name: actual_transit_days
+        description: Actual transit days
+
+      - name: is_on_time
+        description: Boolean flag for on-time delivery
+
+      - name: on_time_delivery_count
+        description: Count flag for on-time deliveries (1 if on-time, 0 if late)
+
+      - name: late_delivery_count
+        description: Count flag for late deliveries
+
+      - name: origin_state
+        description: Origin state
+
+      - name: destination_state
+        description: Destination state
