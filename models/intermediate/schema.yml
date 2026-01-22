@@ -112,6 +112,74 @@ models:
     description: |
       Customer-level funnel tracking sample to product conversion at BOTH email level AND household level.
       Enhanced to capture conversions where customer uses different emails but ships to same address.
+    config:
+      meta:
+        kpis:
+          - kpiName: 'Email Conversion Rate'
+            acronym: 'Email CVR'
+            description: 'Sample-to-purchase conversion rate (same email)'
+            calculation: 'count where conversion_ind = 1 / count(email) * 100'
+            sourceFieldName: 'conversion_ind'
+            granularity: 'Customer'
+            uniqueKey: 'email'
+            dataType: 'percentage'
+            department: 'Marketing'
+            dataOwner: ''
+            businessOwner: ''
+            note: 'Core sample funnel metric - wishlist section 3.2'
+
+          - kpiName: 'Household Conversion Rate'
+            acronym: 'Household CVR'
+            description: 'Sample-to-purchase conversion rate (household level)'
+            calculation: 'count where household_conversion_ind = 1 / count(email) * 100'
+            sourceFieldName: 'household_conversion_ind'
+            granularity: 'Customer'
+            uniqueKey: 'email'
+            dataType: 'percentage'
+            department: 'Marketing'
+            dataOwner: ''
+            businessOwner: ''
+            note: 'Enhanced conversion tracking - business_rules.md section 10'
+
+          - kpiName: 'Hybrid Conversion Rate'
+            acronym: 'Total CVR'
+            description: 'Complete conversion picture (email OR household)'
+            calculation: 'count where hybrid_conversion_ind = 1 / count(email) * 100'
+            sourceFieldName: 'hybrid_conversion_ind'
+            granularity: 'Customer'
+            uniqueKey: 'email'
+            dataType: 'percentage'
+            department: 'Marketing'
+            dataOwner: ''
+            businessOwner: ''
+            note: 'Most accurate conversion metric - recommended for executive reporting'
+
+          - kpiName: 'Average Days to Order'
+            acronym: ''
+            description: 'Average days from sample to product purchase'
+            calculation: 'avg(days_to_order) where conversion_ind = 1'
+            sourceFieldName: 'days_to_order'
+            granularity: 'Customer'
+            uniqueKey: 'email'
+            dataType: 'duration'
+            department: 'Marketing'
+            dataOwner: ''
+            businessOwner: ''
+            note: 'Remarketing window optimization - wishlist section 3.2'
+
+          - kpiName: 'Multi-Email Household Count'
+            acronym: ''
+            description: 'Number of households with multiple emails'
+            calculation: 'count where household_email_count > 1'
+            sourceFieldName: 'household_email_count'
+            granularity: 'Customer'
+            uniqueKey: 'email'
+            dataType: 'count'
+            department: 'Customer Intelligence'
+            dataOwner: ''
+            businessOwner: ''
+            note: 'Measures household tracking impact'
+
     columns:
       - name: email
         description: Customer email (primary key)
@@ -183,6 +251,61 @@ models:
 
   - name: int_ga4_funnel
     description: Session-level website funnel tracking with conversion and dropoff analysis
+    config:
+      meta:
+        kpis:
+          - kpiName: 'Session Conversion Rate'
+            acronym: 'Session CVR'
+            description: 'Percentage of sessions that resulted in purchase'
+            calculation: 'count where is_converted_session = true / count(session_id) * 100'
+            sourceFieldName: 'is_converted_session'
+            granularity: 'Session'
+            uniqueKey: 'user_pseudo_id, ga_session_id'
+            dataType: 'percentage'
+            department: 'Marketing'
+            dataOwner: ''
+            businessOwner: ''
+            note: 'Session-level website conversion - wishlist section 10.1'
+
+          - kpiName: 'Deepest Funnel Stage'
+            acronym: ''
+            description: 'Farthest stage reached in the funnel'
+            calculation: 'max(funnel_stage_depth)'
+            sourceFieldName: 'deepest_funnel_stage'
+            granularity: 'Session'
+            uniqueKey: 'user_pseudo_id, ga_session_id'
+            dataType: 'classification'
+            department: 'Marketing'
+            dataOwner: ''
+            businessOwner: ''
+            note: 'Funnel progress tracking - wishlist section 10.1'
+
+          - kpiName: 'Funnel Dropoff Analysis'
+            acronym: ''
+            description: 'Percentage of sessions that drop off at each stage'
+            calculation: 'count by deepest_funnel_stage / total_sessions'
+            sourceFieldName: 'funnel_stage_depth'
+            granularity: 'Session'
+            uniqueKey: 'user_pseudo_id, ga_session_id'
+            dataType: 'percentage'
+            department: 'Marketing'
+            dataOwner: ''
+            businessOwner: ''
+            note: 'Identifies friction points - wishlist section 10.1'
+
+          - kpiName: 'Transaction Value'
+            acronym: ''
+            description: 'Order value for converted sessions'
+            calculation: 'sum(transaction_value) where is_converted_session = true'
+            sourceFieldName: 'transaction_value'
+            granularity: 'Session'
+            uniqueKey: 'user_pseudo_id, ga_session_id'
+            dataType: 'currency'
+            department: 'Marketing'
+            dataOwner: ''
+            businessOwner: ''
+            note: 'Session-level revenue attribution'
+
     columns:
       - name: user_pseudo_id
         description: GA4 cookie-based user identifier
