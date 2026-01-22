@@ -155,16 +155,25 @@ All source YAML files contain enriched metadata:
 
 ## Key Files
 
+### Core Project Documentation
 - `dbt_project.yml`: Project configuration, materialization defaults
-- `business_rules.md`: **Complete Flooret business logic** (reference this frequently)
-- `ASSUMPTIONS_AND_LIMITATIONS.md`: **YELLOW/RED metrics documentation** (client action items)
+- `business_rules.md`: **Complete Flooret business logic** extracted from analyst's queries. Defines line item classification, customer identification (email vs household), order types, conversion metrics, pricing thresholds, and all business calculations. Reference this frequently when implementing models.
+- `wishlist.md`: **Business metrics wishlist** organized by business function (Executive, Marketing, Customer Intelligence, Operations, etc.). Describes desired metrics, analysis goals, and reporting requirements. Used to prioritize analytics development.
+
+### Implementation Documentation
+- `ASSUMPTIONS_AND_LIMITATIONS.md`: **YELLOW/RED metrics documentation** with client action items for blocked metrics (COGS, Gladly schema, inventory data, etc.)
+- `HOUSEHOLD_CONVERSION_TRACKING.md`: **Enhanced conversion tracking** implementation guide with address-based household identification (NEW - Phase 2 enhancement)
 - `SPRINT_1_SUMMARY.md` through `SPRINT_4_SUMMARY.md`: Sprint deliverables and validation queries
 - `SEMANTIC_ENRICHMENT_PROCESS.md`: How source metadata was generated
+
+### Model Documentation
 - `models/overview.md`: Project overview (rendered in dbt docs)
 - `models/staging/*/_.yml`: Enriched source definitions with semantic metadata
 - `models/intermediate/schema.yml`: Intermediate model tests
 - `models/marts/*/schema.yml`: Mart model tests (core, marketing, operations)
 - `analysis/reconciliation_queries.sql`: Validation queries for existing tables
+
+### Configuration
 - `profiles.yml.example`: BigQuery connection template
 
 ## Development Guidelines
