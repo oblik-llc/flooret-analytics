@@ -161,7 +161,95 @@ These are calculated per customer using window functions:
 
 ---
 
-## 10. Color Extraction
+## 10. Household Identification (Enhanced Conversion Tracking)
+
+**Purpose:** Captures conversions where customers use different emails for sample vs product orders but ship to the same physical address.
+
+### Matching Logic
+Household identification is based on **normalized shipping address + ZIP code**.
+
+**Address Type:** Shipping address only (not billing)
+- Rationale: Physical delivery location is most reliable for household identification
+- Billing addresses vary with payment methods (credit cards, company accounts)
+
+**Match Fields:** `shipping_address_line1` + `shipping_address_zip`
+
+### Address Normalization
+Applied in this order:
+1. **Lowercase:** Convert all text to lowercase
+2. **Trim whitespace:** Remove leading/trailing spaces, collapse multiple spaces to single space
+3. **Remove punctuation:** Strip periods, commas, hyphens, hashtags: `[.,\-#]`
+4. **Standardize abbreviations:**
+   - Street types: Street→st, Avenue→ave, Drive→dr, Road→rd, Lane→ln, Court→ct, Circle→cir, Place→pl
+   - Unit types: Apartment→apt, Suite→ste, Building→bldg
+   - Directions: North→n, South→s, East→e, West→w
+
+### ZIP Code Normalization
+- **US addresses:** Take first 5 digits only (strip spaces, hyphens, +4 extension)
+- **International:** Lowercase and remove spaces (preserve format)
+
+### Household ID
+```sql
+FARM_FINGERPRINT(
+  CONCAT(
+    normalized_address,
+    '|',
+    normalized_zip
+  )
+)
+```
+- Creates deterministic integer ID (same address always gets same ID)
+- Stable across multiple dbt runs
+- No PII exposure in household_id field
+
+### Example Normalization
+```
+-- Input addresses (different formats, same location)
+'123 Main Street, Apt 4'  → normalized: '123 main st apt 4'
+'123 Main St., #4'        → normalized: '123 main st apt 4'
+'123 Main St Apartment 4' → normalized: '123 main st apt 4'
+
+-- All get same household_id: FARM_FINGERPRINT('123 main st apt 4|94110')
+```
+
+### Household-Based Conversion Metrics
+Parallel to email-based metrics (section 9, section 12):
+
+| Metric | Definition |
+|--------|------------|
+| `household_id` | FARM_FINGERPRINT hash of normalized shipping address + ZIP |
+| `household_email_count` | COUNT DISTINCT emails in household |
+| `household_first_sample_order_date` | MIN of `processed_at` WHERE `sample_quantity > 0` AND `product_quantity = 0` (any email in household) |
+| `household_first_product_order_date` | MIN of `processed_at` WHERE `product_quantity > 0` (any email in household) |
+| `household_days_to_order` | `DATE_DIFF(household_first_product_order_date, household_first_sample_order_date, DAY)` |
+| `household_conversion_ind` | 1 if household ever placed a product order (any email) |
+| `household_converted_within_15d/30d/60d/120d` | Household conversion window flags |
+| `hybrid_conversion_ind` | 1 if customer converted at email level OR household level |
+
+### Business Case
+**Problem:** Email-only tracking misses conversions like:
+- Sample ordered on `john@work.com` → ships to home address
+- Product ordered on `family@gmail.com` → ships to same home address
+- Appears as "no conversion" in email-only tracking
+
+**Solution:** Household tracking recognizes both orders ship to same address and correctly counts as conversion at household level.
+
+### Data Exclusions
+- Orders with null shipping address or ZIP
+- Orders with null email
+- Amazon marketplace orders (`email LIKE '%amazon%'`)
+
+### Implementation
+- Staging model: `stg_shopify__orders` includes `shipping_address_line1`, `shipping_address_line2`, `shipping_address_zip`
+- Intermediate model: `int_household_identification` performs normalization and assigns `household_id`
+- Customer funnel: `int_customer_funnel` includes both email-based and household-based metrics
+- Fact table: `fct_sample_conversions` exposes all household conversion metrics
+
+**Full documentation:** See `HOUSEHOLD_CONVERSION_TRACKING.md` for detailed examples, validation queries, and dashboard recommendations.
+
+---
+
+## 11. Color Extraction
 
 Product color is extracted from the line item title:
 ```
@@ -171,7 +259,7 @@ Takes the first word before a space. If no match, uses full title.
 
 ---
 
-## 11. Lifetime Metrics
+## 12. Lifetime Metrics
 
 Calculated per customer (partitioned by email):
 
@@ -182,9 +270,11 @@ Calculated per customer (partitioned by email):
 
 ---
 
-## 12. Sample-to-Purchase Conversion Metrics
+## 13. Sample-to-Purchase Conversion Metrics
 
-### Days to Order
+**Note:** These metrics are calculated at both **email level** (original) and **household level** (section 10). Use `hybrid_conversion_ind` for complete conversion picture.
+
+### Days to Order (Email-Based)
 | Metric | Definition |
 |--------|------------|
 | `days_to_order` | `DATE_DIFF(first_product_order_date, first_sample_order_date, DAY)` |
@@ -207,7 +297,7 @@ Orders are bucketed by time from sample to purchase:
 
 ---
 
-## 13. Sample Order Type
+## 14. Sample Order Type
 
 Classifies customers by which product categories they sampled (before purchasing):
 
@@ -223,7 +313,7 @@ Classifies customers by which product categories they sampled (before purchasing
 
 ---
 
-## 14. Cohort Analysis Definitions
+## 15. Cohort Analysis Definitions
 
 | Metric | Definition |
 |--------|------------|
@@ -237,7 +327,7 @@ Classifies customers by which product categories they sampled (before purchasing
 
 ---
 
-## 15. Pricing Fields
+## 16. Pricing Fields
 
 | Field | Definition |
 |-------|------------|
@@ -251,7 +341,7 @@ Classifies customers by which product categories they sampled (before purchasing
 
 ---
 
-## 16. Quantity Breakdowns
+## 17. Quantity Breakdowns
 
 At line item level:
 | Field | Definition |
@@ -270,7 +360,7 @@ At order level (aggregated):
 
 ---
 
-## 17. Revenue Breakdowns
+## 18. Revenue Breakdowns
 
 | Field | Definition |
 |-------|------------|
@@ -283,7 +373,7 @@ At order level (aggregated):
 
 ---
 
-## 18. Data Exclusions
+## 19. Data Exclusions
 
 The analyst applies these filters in various queries:
 
@@ -296,7 +386,7 @@ The analyst applies these filters in various queries:
 
 ---
 
-## 19. Timestamp Handling
+## 20. Timestamp Handling
 
 - `processed_at` is converted to Pacific time: `DATETIME(processed_at, "America/Los_Angeles")`
 - Dates are extracted as `DATE(processed_at)` after timezone conversion
@@ -304,7 +394,7 @@ The analyst applies these filters in various queries:
 
 ---
 
-## 20. Two Shopify Stores
+## 21. Two Shopify Stores
 
 The analyst maintains separate logic for two stores:
 
@@ -321,8 +411,10 @@ The business logic is identical except for these differences.
 
 1. **Customer identifier:** The analyst uses `email` (lowercased) as the primary customer identifier for lifetime calculations, not `customer_id`. This handles guest checkouts and cross-device behavior.
 
-2. **Product category is critical:** Many downstream metrics depend on correct product category assignment. The SKU regex patterns are specific to Flooret's naming conventions.
+2. **Household identifier (NEW):** Enhanced conversion tracking uses `household_id` (normalized shipping address + ZIP) to capture conversions where customers use different emails but ship to same address. See section 10 for details.
 
-3. **Sample-to-purchase funnel is core:** Much of the analysis focuses on tracking customers from sample orders to product purchases. The `first_*_order_date` fields are foundational.
+3. **Product category is critical:** Many downstream metrics depend on correct product category assignment. The SKU regex patterns are specific to Flooret's naming conventions.
 
-4. **Two stores, one model:** Consider whether to union the two Shopify stores early (with a `store` dimension) or keep them separate throughout.
+4. **Sample-to-purchase funnel is core:** Much of the analysis focuses on tracking customers from sample orders to product purchases. The `first_*_order_date` fields are foundational. Both email-based and household-based conversion metrics should be tracked.
+
+5. **Two stores, one model:** Consider whether to union the two Shopify stores early (with a `store` dimension) or keep them separate throughout.

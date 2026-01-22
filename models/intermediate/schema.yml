@@ -71,8 +71,47 @@ models:
       - name: is_first_product_order
         description: Boolean flag for customer's first product order
 
+  - name: int_household_identification
+    description: |
+      Household identification via shipping address normalization.
+      Enables conversion tracking when customers use different emails for samples vs products
+      but ship to the same physical address (e.g., work email for sample, personal email for product).
+    columns:
+      - name: order_id
+        description: Unique order identifier
+        tests:
+          - unique
+          - not_null
+
+      - name: email
+        description: Customer email (lowercased)
+        tests:
+          - not_null
+
+      - name: household_id
+        description: FARM_FINGERPRINT hash of normalized shipping address + ZIP (deterministic integer ID)
+        tests:
+          - not_null
+
+      - name: household_key
+        description: Human-readable concatenation of normalized address + ZIP
+
+      - name: normalized_address
+        description: Normalized shipping address line 1 (lowercase, trimmed, punctuation removed, abbreviations standardized)
+
+      - name: normalized_zip
+        description: Normalized ZIP code (5 digits for US addresses)
+
+      - name: shipping_address_line1
+        description: Raw shipping address line 1 (for debugging/validation)
+
+      - name: shipping_address_zip
+        description: Raw ZIP code (for debugging/validation)
+
   - name: int_customer_funnel
-    description: Customer-level funnel tracking sample to product conversion
+    description: |
+      Customer-level funnel tracking sample to product conversion at BOTH email level AND household level.
+      Enhanced to capture conversions where customer uses different emails but ships to same address.
     columns:
       - name: email
         description: Customer email (primary key)
@@ -80,29 +119,64 @@ models:
           - unique
           - not_null
 
+      # Email-based metrics (original logic)
       - name: first_sample_order_date
-        description: Date of customer's first sample-only order
+        description: Date of customer's first sample-only order (email-based)
 
       - name: first_product_order_date
-        description: Date of customer's first product order
+        description: Date of customer's first product order (email-based)
 
       - name: days_to_order
-        description: Days from first sample to first product order
+        description: Days from first sample to first product order (email-based)
 
       - name: converted_within_15d
-        description: Boolean flag for conversion within 15 days
+        description: Boolean flag for conversion within 15 days (email-based)
 
       - name: converted_within_30d
-        description: Boolean flag for conversion within 30 days
+        description: Boolean flag for conversion within 30 days (email-based)
 
       - name: converted_within_60d
-        description: Boolean flag for conversion within 60 days
+        description: Boolean flag for conversion within 60 days (email-based)
 
       - name: converted_within_120d
-        description: Boolean flag for conversion within 120 days
+        description: Boolean flag for conversion within 120 days (email-based)
 
       - name: conversion_ind
-        description: Boolean flag indicating if customer ever purchased product
+        description: Boolean flag indicating if customer ever purchased product (email-based)
+
+      # Household-based metrics (NEW)
+      - name: household_id
+        description: Household identifier based on shipping address normalization
+
+      - name: household_email_count
+        description: Number of unique emails in this household
+
+      - name: household_first_sample_order_date
+        description: Date of household's first sample-only order (any email in household)
+
+      - name: household_first_product_order_date
+        description: Date of household's first product order (any email in household)
+
+      - name: household_days_to_order
+        description: Days from first sample to first product order (household-based)
+
+      - name: household_converted_within_15d
+        description: Boolean flag for household conversion within 15 days
+
+      - name: household_converted_within_30d
+        description: Boolean flag for household conversion within 30 days
+
+      - name: household_converted_within_60d
+        description: Boolean flag for household conversion within 60 days
+
+      - name: household_converted_within_120d
+        description: Boolean flag for household conversion within 120 days
+
+      - name: household_conversion_ind
+        description: Boolean flag indicating if household ever purchased product
+
+      - name: hybrid_conversion_ind
+        description: Boolean flag indicating if customer converted at email level OR household level
 
       - name: sample_order_type
         description: Classification of sample orders by product category

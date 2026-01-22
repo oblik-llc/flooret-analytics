@@ -43,12 +43,16 @@ regular_shopify as (
 
         -- location
         location_id,
+        billing_address_address_1 as billing_address_line1,
+        billing_address_address_2 as billing_address_line2,
         billing_address_city,
         billing_address_province as billing_state,
         billing_address_province_code as billing_state_code,
         billing_address_zip,
         billing_address_country,
         billing_address_country_code,
+        shipping_address_address_1 as shipping_address_line1,
+        shipping_address_address_2 as shipping_address_line2,
         shipping_address_city,
         shipping_address_province as shipping_state,
         shipping_address_province_code as shipping_state_code,
@@ -109,12 +113,16 @@ commercial_shopify as (
 
         -- location
         location_id,
+        billing_address_address_1 as billing_address_line1,
+        billing_address_address_2 as billing_address_line2,
         billing_address_city,
         billing_address_province as billing_state,
         billing_address_province_code as billing_state_code,
         billing_address_zip,
         billing_address_country,
         billing_address_country_code,
+        shipping_address_address_1 as shipping_address_line1,
+        shipping_address_address_2 as shipping_address_line2,
         shipping_address_city,
         shipping_address_province as shipping_state,
         shipping_address_province_code as shipping_state_code,

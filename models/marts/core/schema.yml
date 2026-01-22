@@ -138,7 +138,10 @@ models:
               values: ['High Value', 'Medium Value', 'Low Value', 'Sample Only', 'No Purchase']
 
   - name: fct_sample_conversions
-    description: Sample-to-purchase funnel with conversion timing and revenue metrics
+    description: |
+      Sample-to-purchase funnel with conversion timing and revenue metrics.
+      Enhanced with household-level conversion tracking to capture conversions
+      where customers use different emails for samples vs products but ship to same address.
     columns:
       - name: email
         description: Customer email (primary key)
@@ -149,21 +152,70 @@ models:
               to: ref('dim_customers')
               field: email
 
+      # Email-based conversion metrics (original logic)
       - name: first_sample_order_date
-        description: Date of first sample order
+        description: Date of first sample order (email-based)
         tests:
           - not_null
 
       - name: first_product_order_date
-        description: Date of first product order (null if no conversion)
+        description: Date of first product order (email-based, null if no conversion)
 
       - name: days_to_order
-        description: Days from first sample to first product order
+        description: Days from first sample to first product order (email-based)
 
       - name: conversion_ind
-        description: Boolean flag for conversion
+        description: Boolean flag for conversion (email-based)
         tests:
           - not_null
+
+      - name: converted_within_15d
+        description: Boolean flag for conversion within 15 days (email-based)
+
+      - name: converted_within_30d
+        description: Boolean flag for conversion within 30 days (email-based)
+
+      - name: converted_within_60d
+        description: Boolean flag for conversion within 60 days (email-based)
+
+      - name: converted_within_120d
+        description: Boolean flag for conversion within 120 days (email-based)
+
+      # Household identification (NEW)
+      - name: household_id
+        description: Household identifier based on normalized shipping address
+
+      - name: household_email_count
+        description: Number of unique emails in this household
+
+      # Household conversion metrics (NEW)
+      - name: household_first_sample_order_date
+        description: Date of household's first sample order (any email in household)
+
+      - name: household_first_product_order_date
+        description: Date of household's first product order (any email in household)
+
+      - name: household_days_to_order
+        description: Days from first sample to first product order (household-based)
+
+      - name: household_conversion_ind
+        description: Boolean flag for household conversion (any email in household)
+
+      - name: household_converted_within_15d
+        description: Boolean flag for household conversion within 15 days
+
+      - name: household_converted_within_30d
+        description: Boolean flag for household conversion within 30 days
+
+      - name: household_converted_within_60d
+        description: Boolean flag for household conversion within 60 days
+
+      - name: household_converted_within_120d
+        description: Boolean flag for household conversion within 120 days
+
+      # Hybrid conversion (NEW - email OR household)
+      - name: hybrid_conversion_ind
+        description: Boolean flag for conversion at email level OR household level (captures all conversions)
 
       - name: sample_order_type
         description: Classification of sample orders
@@ -174,7 +226,21 @@ models:
         description: Cohort month (first sample order month)
 
       - name: conversion_window_bucket
-        description: Time-based conversion bucket
+        description: Time-based conversion bucket (email-based)
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['No Conversion', '0-15 days', '16-30 days', '31-60 days', '61-120 days', '120+ days']
+
+      - name: household_conversion_window_bucket
+        description: Time-based conversion bucket (household-based)
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['No Conversion', '0-15 days', '16-30 days', '31-60 days', '61-120 days', '120+ days']
+
+      - name: hybrid_conversion_window_bucket
+        description: Time-based conversion bucket (hybrid - uses earliest conversion)
         tests:
           - not_null
           - accepted_values:

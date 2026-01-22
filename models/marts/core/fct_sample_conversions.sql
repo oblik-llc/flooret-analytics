@@ -73,25 +73,52 @@ final as (
         -- Primary key
         funnel.email,
 
-        -- Funnel dates
+        -- Funnel dates (email-based)
         funnel.first_order_date,
         funnel.first_sample_order_date,
         funnel.first_product_order_date,
         funnel.first_cut_order_date,
         funnel.first_plank_order_date,
 
-        -- Conversion timing
+        -- Conversion timing (email-based)
         funnel.days_to_order,
         funnel.days_cut_to_order,
         funnel.days_plank_to_order,
         funnel.days_cut_to_plank,
 
-        -- Conversion indicators
+        -- Conversion indicators (email-based)
         funnel.conversion_ind,
         funnel.converted_within_15d,
         funnel.converted_within_30d,
         funnel.converted_within_60d,
         funnel.converted_within_120d,
+
+        -- Household identification (NEW)
+        funnel.household_id,
+        funnel.household_email_count,
+
+        -- Household conversion dates (NEW)
+        funnel.household_first_order_date,
+        funnel.household_first_sample_order_date,
+        funnel.household_first_product_order_date,
+        funnel.household_first_cut_order_date,
+        funnel.household_first_plank_order_date,
+
+        -- Household conversion timing (NEW)
+        funnel.household_days_to_order,
+        funnel.household_days_cut_to_order,
+        funnel.household_days_plank_to_order,
+        funnel.household_days_cut_to_plank,
+
+        -- Household conversion indicators (NEW)
+        funnel.household_conversion_ind,
+        funnel.household_converted_within_15d,
+        funnel.household_converted_within_30d,
+        funnel.household_converted_within_60d,
+        funnel.household_converted_within_120d,
+
+        -- Hybrid conversion (NEW - email OR household)
+        funnel.hybrid_conversion_ind,
 
         -- Sample order classification
         funnel.sample_order_type,
@@ -146,7 +173,7 @@ final as (
             else null
         end as sample_to_product_revenue_ratio,
 
-        -- Conversion window bucket (for cohort analysis)
+        -- Conversion window bucket (for cohort analysis - email-based)
         case
             when funnel.days_to_order is null then 'No Conversion'
             when funnel.days_to_order <= 15 then '0-15 days'
@@ -154,7 +181,39 @@ final as (
             when funnel.days_to_order <= 60 then '31-60 days'
             when funnel.days_to_order <= 120 then '61-120 days'
             else '120+ days'
-        end as conversion_window_bucket
+        end as conversion_window_bucket,
+
+        -- Household conversion window bucket (NEW)
+        case
+            when funnel.household_days_to_order is null then 'No Conversion'
+            when funnel.household_days_to_order <= 15 then '0-15 days'
+            when funnel.household_days_to_order <= 30 then '16-30 days'
+            when funnel.household_days_to_order <= 60 then '31-60 days'
+            when funnel.household_days_to_order <= 120 then '61-120 days'
+            else '120+ days'
+        end as household_conversion_window_bucket,
+
+        -- Hybrid conversion window bucket (use earliest conversion: email or household)
+        case
+            when funnel.hybrid_conversion_ind = 0 then 'No Conversion'
+            when coalesce(funnel.days_to_order, 999999) <= coalesce(funnel.household_days_to_order, 999999)
+                and funnel.days_to_order <= 15 then '0-15 days'
+            when coalesce(funnel.household_days_to_order, 999999) < coalesce(funnel.days_to_order, 999999)
+                and funnel.household_days_to_order <= 15 then '0-15 days'
+            when coalesce(funnel.days_to_order, 999999) <= coalesce(funnel.household_days_to_order, 999999)
+                and funnel.days_to_order <= 30 then '16-30 days'
+            when coalesce(funnel.household_days_to_order, 999999) < coalesce(funnel.days_to_order, 999999)
+                and funnel.household_days_to_order <= 30 then '16-30 days'
+            when coalesce(funnel.days_to_order, 999999) <= coalesce(funnel.household_days_to_order, 999999)
+                and funnel.days_to_order <= 60 then '31-60 days'
+            when coalesce(funnel.household_days_to_order, 999999) < coalesce(funnel.days_to_order, 999999)
+                and funnel.household_days_to_order <= 60 then '31-60 days'
+            when coalesce(funnel.days_to_order, 999999) <= coalesce(funnel.household_days_to_order, 999999)
+                and funnel.days_to_order <= 120 then '61-120 days'
+            when coalesce(funnel.household_days_to_order, 999999) < coalesce(funnel.days_to_order, 999999)
+                and funnel.household_days_to_order <= 120 then '61-120 days'
+            else '120+ days'
+        end as hybrid_conversion_window_bucket
 
     from customer_funnel as funnel
     inner join customers
