@@ -157,9 +157,14 @@ All source YAML files contain enriched metadata:
 
 - `dbt_project.yml`: Project configuration, materialization defaults
 - `business_rules.md`: **Complete Flooret business logic** (reference this frequently)
+- `ASSUMPTIONS_AND_LIMITATIONS.md`: **YELLOW/RED metrics documentation** (client action items)
+- `SPRINT_1_SUMMARY.md` through `SPRINT_4_SUMMARY.md`: Sprint deliverables and validation queries
 - `SEMANTIC_ENRICHMENT_PROCESS.md`: How source metadata was generated
 - `models/overview.md`: Project overview (rendered in dbt docs)
 - `models/staging/*/_.yml`: Enriched source definitions with semantic metadata
+- `models/intermediate/schema.yml`: Intermediate model tests
+- `models/marts/*/schema.yml`: Mart model tests (core, marketing, operations)
+- `analysis/reconciliation_queries.sql`: Validation queries for existing tables
 - `profiles.yml.example`: BigQuery connection template
 
 ## Development Guidelines
@@ -237,9 +242,26 @@ Phase 1 (Setup): ✅ COMPLETE
 - Enriched semantic metadata
 - BigQuery connection configured
 
-Phase 2 (Feasibility Analysis): NEXT
-- Analyze wishlist metrics against sources
-- Generate client questions
+Phase 2 (Analytics Implementation): ✅ COMPLETE
+- Sprint 1: Staging layer (10 models)
+- Sprint 2: Core marts (7 models - orders, customers, sample funnel)
+- Sprint 3: Marketing & operations (9 models)
+- Sprint 4: Advanced analytics (5 models - funnel, cohorts, unit economics)
+- 28 total SQL models with comprehensive test coverage
+- Documentation: 4 sprint summaries + assumptions/limitations guide
 
-Phase 3 (Model Development): FUTURE
-- Build staging, intermediate, and mart models
+**Metrics Status:**
+- ✅ GREEN (60%): 35 metrics fully implemented
+- 🟡 YELLOW (30%): 18 metrics with documented assumptions
+- 🔴 RED (10%): 6 metrics blocked by missing data sources
+
+**Key Documentation Files:**
+- `SPRINT_1_SUMMARY.md` through `SPRINT_4_SUMMARY.md`: Sprint deliverables
+- `ASSUMPTIONS_AND_LIMITATIONS.md`: YELLOW/RED metric documentation
+- `analysis/reconciliation_queries.sql`: Validation queries
+
+Phase 3 (Validation & Production): NEXT
+- Run dbt compile/run/test on BigQuery
+- Execute reconciliation queries
+- Build Sigma dashboards
+- Address RED metrics (COGS, Gladly schema, attribution validation)
