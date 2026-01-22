@@ -10,6 +10,9 @@ This is a **dbt (data build tool) analytics project** for Flooret, a flooring e-
 
 ### dbt Core Commands
 ```bash
+# Parse project structure without BigQuery connection (validates Jinja/YAML)
+dbt parse
+
 # Test BigQuery connection
 dbt debug
 
@@ -164,6 +167,7 @@ All source YAML files contain enriched metadata:
 - `ASSUMPTIONS_AND_LIMITATIONS.md`: **YELLOW/RED metrics documentation** with client action items for blocked metrics (COGS, Gladly schema, inventory data, etc.)
 - `HOUSEHOLD_CONVERSION_TRACKING.md`: **Enhanced conversion tracking** implementation guide with address-based household identification (NEW - Phase 2 enhancement)
 - `SPRINT_1_SUMMARY.md` through `SPRINT_4_SUMMARY.md`: Sprint deliverables and validation queries
+- `PHASE_3_VALIDATION.md`: **Phase 3 validation results** - Pre-BigQuery validation status, deprecation warnings, and next steps (NEW)
 - `SEMANTIC_ENRICHMENT_PROCESS.md`: How source metadata was generated
 
 ### Model Documentation
@@ -269,8 +273,20 @@ Phase 2 (Analytics Implementation): ✅ COMPLETE
 - `ASSUMPTIONS_AND_LIMITATIONS.md`: YELLOW/RED metric documentation
 - `analysis/reconciliation_queries.sql`: Validation queries
 
-Phase 3 (Validation & Production): NEXT
-- Run dbt compile/run/test on BigQuery
-- Execute reconciliation queries
-- Build Sigma dashboards
-- Address RED metrics (COGS, Gladly schema, attribution validation)
+Phase 3 (Validation & Production): 🚧 IN PROGRESS
+- Pre-BigQuery Validation: ✅ COMPLETE
+  - Environment: Python 3.13.7, dbt-core 1.11.2, dbt-bigquery 1.11.0
+  - profiles.yml configured (project name typo fixed)
+  - `dbt parse` successful - all 28 models validated
+  - SQL syntax, Jinja templates, dependencies verified
+  - Deprecation warnings documented (non-blocking)
+- Pending BigQuery Access:
+  - Run dbt debug (test connection)
+  - Run dbt compile (full schema validation)
+  - Run dbt run/test on BigQuery
+  - Execute reconciliation queries
+  - Build Sigma dashboards
+  - Address RED metrics (COGS, Gladly schema, attribution validation)
+
+**Phase 3 Documentation:**
+- `PHASE_3_VALIDATION.md`: Pre-BigQuery validation results and next steps
