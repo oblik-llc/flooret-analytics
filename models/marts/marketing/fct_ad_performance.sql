@@ -38,8 +38,8 @@ google_ads as (
         'Google' as channel,
         campaign_id,
         campaign_name,
-        null as ad_set_name,  -- Google doesn't have ad sets like Facebook
-        null as ad_name,  -- Campaign-level data only
+        cast(null as string) as ad_set_name,  -- Google doesn't have ad sets like Facebook
+        cast(null as string) as ad_name,  -- Campaign-level data only
         clicks,
         impressions,
         spend,

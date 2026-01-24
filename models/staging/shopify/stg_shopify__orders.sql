@@ -61,7 +61,7 @@ regular_shopify as (
         shipping_address_country_code,
 
         -- tags for salesperson extraction
-        tags,
+        order_tags as tags,
 
         -- store identifier
         'regular' as store,
@@ -72,8 +72,7 @@ regular_shopify as (
         _fivetran_synced,
         source_relation
 
-    from {{ source('ft_shopify_shopify', 'int_shopify_gql__order') }}
-    where source_relation like '%shopify.shopify%'
+    from {{ source('ft_shopify_shopify', 'shopify_gql__orders') }}
 ),
 
 commercial_shopify as (
@@ -131,7 +130,7 @@ commercial_shopify as (
         shipping_address_country_code,
 
         -- tags for salesperson extraction
-        tags,
+        order_tags as tags,
 
         -- store identifier
         'commercial' as store,
@@ -142,8 +141,7 @@ commercial_shopify as (
         _fivetran_synced,
         source_relation
 
-    from {{ source('ft_shopify_commercial_shopify', 'int_shopify_gql__order') }}
-    where source_relation like '%shopify_commercial%'
+    from {{ source('ft_shopify_commercial_shopify', 'shopify_gql__orders') }}
 ),
 
 unioned as (

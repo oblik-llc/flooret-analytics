@@ -1084,3 +1084,45 @@ models:
 
       - name: ad_spend_pct
         description: Ad spend as percentage of net sales
+
+  - name: fct_demand_forecast_prep
+    description: Time series data prepared for demand forecasting models with seasonality and trend features
+    columns:
+      - name: date_day
+        description: Daily grain date
+        tests:
+          - not_null
+
+      - name: store
+        description: Store identifier (regular or commercial)
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['regular', 'commercial']
+
+      - name: sku
+        description: Product SKU
+        tests:
+          - not_null
+
+      - name: line_item_type
+        description: Line item type (should be Product for forecasting)
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Product']
+
+      - name: quantity_sold
+        description: Units sold on this day
+
+      - name: revenue
+        description: Revenue generated on this day
+
+      - name: day_of_week
+        description: Day of week (1=Sunday, 7=Saturday)
+
+      - name: is_weekend
+        description: Boolean flag for weekend days
+
+      - name: is_holiday_week
+        description: Boolean flag for major holiday weeks

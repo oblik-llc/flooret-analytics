@@ -87,9 +87,9 @@ final as (
         -- Location (shipping for regional analysis)
         orders.shipping_state,
         orders.shipping_state_code,
-        orders.shipping_city,
-        orders.shipping_zip,
-        orders.shipping_country,
+        orders.shipping_address_city,
+        orders.shipping_address_zip,
+        orders.shipping_address_country,
 
         -- Billing location (for tax/fraud analysis)
         orders.billing_state,

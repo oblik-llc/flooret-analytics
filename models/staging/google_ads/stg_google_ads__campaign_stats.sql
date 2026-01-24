@@ -27,7 +27,6 @@ campaign_stats as (
         -- segments
         segments_ad_network_type as ad_network_type,
         segments_device as device,
-        segments_slot as slot,
 
         -- metadata
         _DATA_DATE as data_date,
@@ -97,7 +96,6 @@ joined as (
         -- segments
         stats.ad_network_type,
         stats.device,
-        stats.slot,
 
         -- channel identifier
         'Google' as channel,

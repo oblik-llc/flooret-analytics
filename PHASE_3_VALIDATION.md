@@ -1,7 +1,8 @@
 # Phase 3: Validation & Production - Progress Summary
 
 **Date Started:** January 21, 2026
-**Status:** Pre-BigQuery Validation Complete ✅
+**Date Completed:** January 24, 2026
+**Status:** BigQuery Execution Complete ✅
 
 ## Pre-Connection Validation (Complete)
 
@@ -17,7 +18,7 @@ Ran `dbt parse` successfully - validates project without BigQuery connection:
 - ✅ All Jinja templates valid
 - ✅ Project structure valid
 - ✅ Dependency graph resolves correctly
-- ✅ 28 models ready for compilation
+- ✅ 27 models ready for compilation
 
 ## Deprecation Warnings (Non-Blocking)
 
@@ -77,47 +78,92 @@ columns:
 
 **Action Item:** Update test definitions in Klaviyo schema.yml
 
-## Next Steps (Requires BigQuery Access)
+## BigQuery Execution (Complete)
 
-### 1. Connection Validation
-```bash
-dbt debug
-```
-Expected: Connection to `bigcommerce-313718` project successful
+### Connection Setup ✅
+- **Method:** OAuth via `gcloud auth application-default login`
+- **Project:** bigcommerce-313718
+- **Dataset:** analytics (creates analytics_staging, analytics_intermediate, analytics_marts)
+- **Timeout:** 600 seconds
 
-### 2. Compilation with Schema Resolution
-```bash
-dbt compile
-```
-Expected: All 28 models compile successfully with BigQuery schema validation
+### Model Execution ✅
+All 27 models executed successfully on January 24, 2026.
 
-### 3. Model Execution (Development Dataset)
-```bash
-# Run staging layer first
-dbt run --select staging.*
+**Staging Layer (10 views):**
+| Model | Rows |
+|-------|------|
+| stg_shopify__orders | 310,406 |
+| stg_shopify__order_lines | 635,309 |
+| stg_shopify__customers | 381,312 |
+| stg_ga4__events | (90-day window) |
+| stg_facebook_ads__ad_report | ✅ |
+| stg_google_ads__campaign_stats | ✅ |
+| stg_klaviyo__campaigns | ✅ |
+| stg_klaviyo__flows | ✅ |
+| stg_freightview__shipments | ✅ |
 
-# Run intermediate layer
-dbt run --select intermediate.*
+**Intermediate Layer (5 views + 1 table):**
+| Model | Type | Rows |
+|-------|------|------|
+| int_order_classification | view | - |
+| int_customer_lifetime_metrics | view | - |
+| int_household_identification | view | - |
+| int_customer_funnel | **table** | 156,800 |
+| int_ga4_funnel | view | - |
 
-# Run marts layer
-dbt run --select marts.*
-```
-Expected: All models materialize in `dbt_dev` dataset
+**Marts Layer (11 tables):**
+| Model | Rows | Processing Time |
+|-------|------|-----------------|
+| fct_orders | 765,300 | 65s |
+| fct_order_lines | 1,800,000 | 13s |
+| dim_customers | 403,100 | 24s |
+| fct_sample_conversions | 311,700 | 15s |
+| fct_daily_performance | 4,000 | 59s |
+| fct_monthly_cohorts | 3,700 | 10s |
+| fct_weekly_product_sales | 102,900 | 10s |
+| fct_unit_economics | 14,200,000 | 58s |
+| fct_ad_performance | 35,900 | 5s |
+| fct_email_performance | 31 | 4s |
+| fct_ga4_funnel | 637 | 15s |
+| fct_shipments | 16,500 | 8s |
+| fct_demand_forecast_prep | (view) | - |
 
-### 4. Test Execution
+### Bug Fixes Applied
+
+**1. Empty `source_relation` Filter (Critical)**
+- **Issue:** Staging models had `WHERE source_relation LIKE '%shopify%'` but column was empty
+- **Impact:** All staging tables returned 0 rows
+- **Fix:** Removed the filter from stg_shopify__orders, stg_shopify__order_lines, stg_shopify__customers
+
+**2. Performance Optimization**
+- **Issue:** `fct_sample_conversions` timing out after 5+ minutes
+- **Root cause:** `int_customer_funnel` was a VIEW with complex aggregations, re-executed on every query
+- **Fix:** Materialized `int_customer_funnel` as TABLE, optimized fct_sample_conversions to reduce scans
+- **Result:** Build time reduced from 5+ minutes to 15 seconds
+
+### Schema Fixes Applied During Initial Run
+- Column name mismatches (shipping_city → shipping_address_city)
+- Missing columns handled with NULL casts (Klaviyo, commercial Shopify)
+- Source table name changes (int_shopify_gql__order → shopify_gql__orders)
+- UNION ALL type casting for NULL values
+- Window function + GROUP BY conflicts resolved
+
+## Next Steps (Remaining)
+
+### 1. Test Execution
 ```bash
 dbt test
 ```
 Expected: All data quality tests pass
 
-### 5. Reconciliation Queries
+### 2. Reconciliation Queries
 Execute queries from `analysis/reconciliation_queries.sql` to validate:
 - Order counts match existing tables
 - Revenue totals match existing tables
 - Customer metrics match existing tables
 - Sample-to-purchase conversion rates validate
 
-### 6. Documentation Generation
+### 3. Documentation Generation
 ```bash
 dbt docs generate
 dbt docs serve
@@ -159,11 +205,11 @@ dbt docs generate && dbt docs serve  # Generate docs
 
 ## Success Criteria for Phase 3
 
-- [ ] `dbt debug` connects successfully
-- [ ] `dbt compile` completes without errors
-- [ ] All 28 models run successfully in development
-- [ ] All data quality tests pass
+- [x] `dbt debug` connects successfully
+- [x] `dbt compile` completes without errors
+- [x] All 27 models run successfully in development
+- [ ] All data quality tests pass (`dbt test`)
 - [ ] Reconciliation queries validate against existing tables
-- [ ] Documentation site generated
+- [ ] Documentation site generated (`dbt docs generate`)
 - [ ] Address deprecation warnings (optional, non-blocking)
-- [ ] Document any RED metrics requiring client action
+- [x] Document any RED metrics requiring client action (see ASSUMPTIONS_AND_LIMITATIONS.md)

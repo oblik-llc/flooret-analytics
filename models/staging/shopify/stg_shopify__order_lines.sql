@@ -40,7 +40,6 @@ regular_shopify as (
         source_relation
 
     from {{ source('ft_shopify_shopify', 'shopify_gql__order_lines') }}
-    where source_relation like '%shopify.shopify%'
 ),
 
 commercial_shopify as (
@@ -77,7 +76,6 @@ commercial_shopify as (
         source_relation
 
     from {{ source('ft_shopify_commercial_shopify', 'shopify_gql__order_lines') }}
-    where source_relation like '%shopify_commercial%'
 ),
 
 unioned as (

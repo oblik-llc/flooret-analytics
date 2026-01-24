@@ -9,7 +9,7 @@ with
 source as (
     select * from {{ source('analytics_266190494', 'events_*') }}
     -- Limit to recent data for performance (adjust as needed)
-    where _table_suffix >= format_date('%Y%m%d', date_sub(current_date(), interval 365 day))
+    where _table_suffix >= format_date('%Y%m%d', date_sub(current_date(), interval 90 day))
 ),
 
 renamed as (

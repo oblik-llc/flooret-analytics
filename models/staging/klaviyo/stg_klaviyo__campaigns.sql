@@ -42,7 +42,7 @@ renamed as (
         unique_count_clicked_email as clicked,
         unique_count_marked_email_as_spam as marked_spam,
         unique_count_unsubscribed as unsubscribed,
-        unique_count_bounced_email as bounced,
+        cast(null as int64) as bounced,  -- unique_count_bounced_email not available in source
 
         -- Total engagement (includes repeats)
         count_opened_email as total_opens,
@@ -61,10 +61,7 @@ renamed as (
 
         -- SMS metrics (if applicable)
         unique_count_received_sms as sms_received,
-        unique_count_clicked_sms as sms_clicked,
-
-        -- Fivetran metadata
-        _fivetran_synced
+        unique_count_clicked_sms as sms_clicked
 
     from source
     where status = 'sent'  -- Only sent campaigns

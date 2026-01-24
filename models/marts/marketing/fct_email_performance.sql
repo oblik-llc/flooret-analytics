@@ -1,7 +1,7 @@
 {{
     config(
         materialized='table',
-        cluster_by=['channel', 'campaign_type']
+        cluster_by=['channel', 'email_type']
     )
 }}
 
@@ -48,11 +48,11 @@ flows as (
         'Flow' as email_type,
         flow_name as email_name,
         flow_category as email_category,
-        null as sent_at,  -- Flows don't have a single send date
-        null as sent_date,
-        null as subject,  -- Flows have multiple messages with different subjects
-        null as from_email,
-        null as from_name,
+        cast(null as timestamp) as sent_at,  -- Flows don't have a single send date
+        cast(null as date) as sent_date,
+        cast(null as string) as subject,  -- Flows have multiple messages with different subjects
+        cast(null as string) as from_email,
+        cast(null as string) as from_name,
         recipients,
         received,
         opened,

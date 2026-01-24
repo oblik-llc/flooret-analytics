@@ -90,7 +90,7 @@ final as (
         -- Location (for regional analysis)
         orders.shipping_state,
         orders.shipping_state_code,
-        orders.shipping_city,
+        orders.shipping_address_city,
 
         -- Conversion flags (did this line item convert from sample to purchase?)
         case

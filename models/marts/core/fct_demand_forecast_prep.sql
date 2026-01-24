@@ -44,7 +44,7 @@ with daily_sku_sales as (
 
         -- Sales metrics
         sum(l.quantity) as quantity_sold,
-        sum(l.total_price) as revenue,
+        sum(l.line_total) as revenue,
         count(distinct o.order_id) as order_count,
         count(distinct o.email) as unique_customers,
 

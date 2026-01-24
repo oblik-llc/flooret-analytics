@@ -10,6 +10,19 @@
     )
 }}
 
+/*
+    Sample-to-Product Conversion Analysis
+
+    Purpose:
+        Tracks customer journey from sample orders to product purchases with
+        detailed conversion metrics at email and household levels.
+
+    Optimization Notes:
+        - Combines first_sample and first_product order lookups into single scan
+        - Uses int_customer_funnel (materialized table) for funnel metrics
+        - Aggregates product orders by window in single pass
+*/
+
 with
 
 customer_funnel as (
@@ -20,52 +33,49 @@ customers as (
     select * from {{ ref('dim_customers') }}
 ),
 
--- Get first sample order details
-first_sample_orders as (
+-- OPTIMIZED: Single scan to get both first sample and first product order details
+first_orders as (
     select
         email,
-        order_id as first_sample_order_id,
-        store as first_sample_store,
-        salesperson as first_sample_salesperson,
-        sample_quantity as first_sample_quantity,
-        sample_revenue as first_sample_revenue,
-        shipping_state as first_sample_shipping_state,
-        shipping_state_code as first_sample_shipping_state_code
+        -- First sample order fields
+        max(case when is_first_sample_order = 1 then order_id end) as first_sample_order_id,
+        max(case when is_first_sample_order = 1 then store end) as first_sample_store,
+        max(case when is_first_sample_order = 1 then salesperson end) as first_sample_salesperson,
+        max(case when is_first_sample_order = 1 then sample_quantity end) as first_sample_quantity,
+        max(case when is_first_sample_order = 1 then sample_revenue end) as first_sample_revenue,
+        max(case when is_first_sample_order = 1 then shipping_state end) as first_sample_shipping_state,
+        max(case when is_first_sample_order = 1 then shipping_state_code end) as first_sample_shipping_state_code,
+
+        -- First product order fields
+        max(case when is_first_product_order = 1 then order_id end) as first_product_order_id,
+        max(case when is_first_product_order = 1 then store end) as first_product_store,
+        max(case when is_first_product_order = 1 then salesperson end) as first_product_salesperson,
+        max(case when is_first_product_order = 1 then product_quantity end) as first_product_quantity,
+        max(case when is_first_product_order = 1 then product_revenue end) as first_product_revenue,
+        max(case when is_first_product_order = 1 then shipping_state end) as first_product_shipping_state,
+        max(case when is_first_product_order = 1 then shipping_state_code end) as first_product_shipping_state_code
 
     from {{ ref('fct_orders') }}
-    where is_first_sample_order = 1
-),
-
--- Get first product order details
-first_product_orders as (
-    select
-        email,
-        order_id as first_product_order_id,
-        store as first_product_store,
-        salesperson as first_product_salesperson,
-        product_quantity as first_product_quantity,
-        product_revenue as first_product_revenue,
-        shipping_state as first_product_shipping_state,
-        shipping_state_code as first_product_shipping_state_code
-
-    from {{ ref('fct_orders') }}
-    where is_first_product_order = 1
+    where is_first_sample_order = 1 or is_first_product_order = 1
+    group by email
 ),
 
 -- Count product orders within windows after first sample
+-- Join with funnel to get first_sample_order_date (avoids self-referencing fct_orders column)
 product_orders_by_window as (
     select
-        email,
-        count(distinct case when date_diff(order_date, first_sample_order_date, day) <= 15 then order_id end) as product_orders_within_15d,
-        count(distinct case when date_diff(order_date, first_sample_order_date, day) <= 30 then order_id end) as product_orders_within_30d,
-        count(distinct case when date_diff(order_date, first_sample_order_date, day) <= 60 then order_id end) as product_orders_within_60d,
-        count(distinct case when date_diff(order_date, first_sample_order_date, day) <= 120 then order_id end) as product_orders_within_120d,
-        sum(case when date_diff(order_date, first_sample_order_date, day) <= 60 then product_revenue else 0 end) as product_revenue_within_60d
+        o.email,
+        count(distinct case when date_diff(o.order_date, f.first_sample_order_date, day) <= 15 then o.order_id end) as product_orders_within_15d,
+        count(distinct case when date_diff(o.order_date, f.first_sample_order_date, day) <= 30 then o.order_id end) as product_orders_within_30d,
+        count(distinct case when date_diff(o.order_date, f.first_sample_order_date, day) <= 60 then o.order_id end) as product_orders_within_60d,
+        count(distinct case when date_diff(o.order_date, f.first_sample_order_date, day) <= 120 then o.order_id end) as product_orders_within_120d,
+        sum(case when date_diff(o.order_date, f.first_sample_order_date, day) <= 60 then o.product_revenue else 0 end) as product_revenue_within_60d
 
-    from {{ ref('fct_orders') }}
-    where is_product_order = 1
-        and first_sample_order_date is not null
-    group by 1
+    from {{ ref('fct_orders') }} o
+    inner join customer_funnel f on o.email = f.email
+    where o.is_product_order = 1
+        and f.first_sample_order_date is not null
+    group by o.email
 ),
 
 final as (
@@ -125,22 +135,22 @@ final as (
         funnel.cohort_month,
 
         -- First sample order details
-        first_sample.first_sample_order_id,
-        first_sample.first_sample_store,
-        first_sample.first_sample_salesperson,
-        first_sample.first_sample_quantity,
-        first_sample.first_sample_revenue,
-        first_sample.first_sample_shipping_state,
-        first_sample.first_sample_shipping_state_code,
+        first_orders.first_sample_order_id,
+        first_orders.first_sample_store,
+        first_orders.first_sample_salesperson,
+        first_orders.first_sample_quantity,
+        first_orders.first_sample_revenue,
+        first_orders.first_sample_shipping_state,
+        first_orders.first_sample_shipping_state_code,
 
         -- First product order details (null if no conversion)
-        first_product.first_product_order_id,
-        first_product.first_product_store,
-        first_product.first_product_salesperson,
-        first_product.first_product_quantity,
-        first_product.first_product_revenue,
-        first_product.first_product_shipping_state,
-        first_product.first_product_shipping_state_code,
+        first_orders.first_product_order_id,
+        first_orders.first_product_store,
+        first_orders.first_product_salesperson,
+        first_orders.first_product_quantity,
+        first_orders.first_product_revenue,
+        first_orders.first_product_shipping_state,
+        first_orders.first_product_shipping_state_code,
 
         -- Product orders by window
         coalesce(windows.product_orders_within_15d, 0) as product_orders_within_15d,
@@ -167,9 +177,9 @@ final as (
 
         -- Conversion efficiency metrics
         case
-            when first_product.first_product_revenue is not null
-                and first_sample.first_sample_revenue > 0
-            then first_product.first_product_revenue / first_sample.first_sample_revenue
+            when first_orders.first_product_revenue is not null
+                and first_orders.first_sample_revenue > 0
+            then first_orders.first_product_revenue / first_orders.first_sample_revenue
             else null
         end as sample_to_product_revenue_ratio,
 
@@ -196,32 +206,18 @@ final as (
         -- Hybrid conversion window bucket (use earliest conversion: email or household)
         case
             when funnel.hybrid_conversion_ind = 0 then 'No Conversion'
-            when coalesce(funnel.days_to_order, 999999) <= coalesce(funnel.household_days_to_order, 999999)
-                and funnel.days_to_order <= 15 then '0-15 days'
-            when coalesce(funnel.household_days_to_order, 999999) < coalesce(funnel.days_to_order, 999999)
-                and funnel.household_days_to_order <= 15 then '0-15 days'
-            when coalesce(funnel.days_to_order, 999999) <= coalesce(funnel.household_days_to_order, 999999)
-                and funnel.days_to_order <= 30 then '16-30 days'
-            when coalesce(funnel.household_days_to_order, 999999) < coalesce(funnel.days_to_order, 999999)
-                and funnel.household_days_to_order <= 30 then '16-30 days'
-            when coalesce(funnel.days_to_order, 999999) <= coalesce(funnel.household_days_to_order, 999999)
-                and funnel.days_to_order <= 60 then '31-60 days'
-            when coalesce(funnel.household_days_to_order, 999999) < coalesce(funnel.days_to_order, 999999)
-                and funnel.household_days_to_order <= 60 then '31-60 days'
-            when coalesce(funnel.days_to_order, 999999) <= coalesce(funnel.household_days_to_order, 999999)
-                and funnel.days_to_order <= 120 then '61-120 days'
-            when coalesce(funnel.household_days_to_order, 999999) < coalesce(funnel.days_to_order, 999999)
-                and funnel.household_days_to_order <= 120 then '61-120 days'
+            when least(coalesce(funnel.days_to_order, 999999), coalesce(funnel.household_days_to_order, 999999)) <= 15 then '0-15 days'
+            when least(coalesce(funnel.days_to_order, 999999), coalesce(funnel.household_days_to_order, 999999)) <= 30 then '16-30 days'
+            when least(coalesce(funnel.days_to_order, 999999), coalesce(funnel.household_days_to_order, 999999)) <= 60 then '31-60 days'
+            when least(coalesce(funnel.days_to_order, 999999), coalesce(funnel.household_days_to_order, 999999)) <= 120 then '61-120 days'
             else '120+ days'
         end as hybrid_conversion_window_bucket
 
     from customer_funnel as funnel
     inner join customers
         on funnel.email = customers.email
-    left join first_sample_orders as first_sample
-        on funnel.email = first_sample.email
-    left join first_product_orders as first_product
-        on funnel.email = first_product.email
+    left join first_orders
+        on funnel.email = first_orders.email
     left join product_orders_by_window as windows
         on funnel.email = windows.email
 

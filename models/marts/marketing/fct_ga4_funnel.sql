@@ -169,4 +169,3 @@ final as (
 )
 
 select * from final
-order by session_date desc, funnel_stage_depth desc

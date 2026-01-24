@@ -39,7 +39,7 @@ customer_primary_location as (
         -- Use mode of shipping_state as primary location
         approx_top_count(shipping_state, 1)[offset(0)].value as primary_shipping_state,
         approx_top_count(shipping_state_code, 1)[offset(0)].value as primary_shipping_state_code,
-        approx_top_count(shipping_city, 1)[offset(0)].value as primary_shipping_city
+        approx_top_count(shipping_address_city, 1)[offset(0)].value as primary_shipping_city
 
     from {{ ref('fct_orders') }}
     where shipping_state is not null

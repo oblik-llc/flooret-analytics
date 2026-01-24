@@ -58,7 +58,6 @@ regular_shopify as (
         source_relation
 
     from {{ source('ft_shopify_shopify', 'shopify_gql__customers') }}
-    where source_relation like '%shopify.shopify%'
 ),
 
 commercial_shopify as (
@@ -100,7 +99,7 @@ commercial_shopify as (
         lifetime_total_net,
         lifetime_total_tax,
         lifetime_total_discount,
-        lifetime_abandoned_checkouts,
+        cast(null as int64) as lifetime_abandoned_checkouts,  -- column not available in commercial shopify
         avg_order_value,
         avg_quantity_per_order,
         avg_tax_per_order,
@@ -113,7 +112,6 @@ commercial_shopify as (
         source_relation
 
     from {{ source('ft_shopify_commercial_shopify', 'shopify_gql__customers') }}
-    where source_relation like '%shopify_commercial%'
 ),
 
 unioned as (
