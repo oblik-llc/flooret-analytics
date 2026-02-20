@@ -111,6 +111,7 @@ final as (
     from order_lines as lines
     inner join orders
         on lines.order_id = orders.order_id
+        and lines.store = orders.store
 )
 
 select * from final

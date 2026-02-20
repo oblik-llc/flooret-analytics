@@ -19,7 +19,8 @@ regular_shopify as (
         title,
         name as line_item_name,
         quantity,
-        price_pres_amount as price,
+        variant_price as price,
+        price_pres_amount as line_total_gross,
         total_discount_pres_amount as total_discount,
 
         -- metadata
@@ -55,7 +56,8 @@ commercial_shopify as (
         title,
         name as line_item_name,
         quantity,
-        price_pres_amount as price,
+        variant_price as price,
+        price_pres_amount as line_total_gross,
         total_discount_pres_amount as total_discount,
 
         -- metadata
@@ -129,8 +131,8 @@ classified as (
             title
         ) as color,
 
-        -- Calculate line total
-        price * quantity as line_total
+        -- Line total (price_pres_amount is already qty * unit price)
+        line_total_gross as line_total
 
     from unioned
 ),

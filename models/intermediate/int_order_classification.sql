@@ -18,6 +18,7 @@ orders as (
 order_line_agg as (
     select
         order_id,
+        store,
 
         -- Quantity aggregations by type
         sum(sample_quantity) as sample_quantity,
@@ -44,7 +45,7 @@ order_line_agg as (
         count(distinct case when product_quantity > 0 then color end) as product_color_count
 
     from order_lines
-    group by 1
+    group by 1, 2
 ),
 
 -- Join with order header
@@ -117,6 +118,7 @@ orders_enriched as (
     from orders
     left join order_line_agg as agg
         on orders.order_id = agg.order_id
+        and orders.store = agg.store
 ),
 
 final as (
