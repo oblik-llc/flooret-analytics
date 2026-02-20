@@ -30,6 +30,12 @@ regular_shopify as (
         total_tax_pres_amount as total_tax,
         total_tip_received_pres_amount as total_tip_received,
 
+        -- refund fields (from Fivetran shopify_gql model)
+        coalesce(refund_subtotal, 0) as refund_subtotal,
+        coalesce(refund_total_tax, 0) as refund_total_tax,
+        coalesce(order_adjustment_amount, 0) as order_adjustment_amount,
+        order_adjusted_total,
+
         -- order metadata
         name as order_name,
         number as order_number,
@@ -99,6 +105,12 @@ commercial_shopify as (
         total_tax_pres_amount as total_tax,
         total_tip_received_pres_amount as total_tip_received,
 
+        -- refund fields (from Fivetran shopify_gql model)
+        coalesce(refund_subtotal, 0) as refund_subtotal,
+        coalesce(refund_total_tax, 0) as refund_total_tax,
+        coalesce(order_adjustment_amount, 0) as order_adjustment_amount,
+        order_adjusted_total,
+
         -- order metadata
         name as order_name,
         number as order_number,
@@ -150,6 +162,13 @@ unioned as (
     select * from commercial_shopify
 ),
 
+-- Deduplicate: source can have duplicate rows per order_id
+deduped as (
+    select *
+    from unioned
+    qualify row_number() over (partition by order_id, store order by _fivetran_synced desc) = 1
+),
+
 final as (
     select
         *,
@@ -165,7 +184,7 @@ final as (
         extract(month from processed_at) as order_month,
         extract(quarter from processed_at) as order_quarter
 
-    from unioned
+    from deduped
 )
 
 select * from final

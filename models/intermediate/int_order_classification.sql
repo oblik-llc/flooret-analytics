@@ -70,6 +70,11 @@ orders_enriched as (
         orders.total_tax,
         orders.total_tip_received,
 
+        -- Refund fields
+        orders.refund_subtotal,
+        orders.refund_total_tax,
+        orders.order_adjustment_amount,
+
         -- Order metadata
         orders.order_name,
         orders.order_number,
@@ -138,8 +143,8 @@ final as (
         case when cut_sample_quantity > 0 then 1 else 0 end as has_cut_samples,
         case when plank_sample_quantity > 0 then 1 else 0 end as has_plank_samples,
 
-        -- Net sales (subtotal_price is the primary revenue metric, same as net_sales)
-        subtotal_price as net_sales,
+        -- Net sales (subtotal_price minus refund subtotals)
+        subtotal_price - refund_subtotal as net_sales,
 
         -- Average order value metrics
         case when line_item_count > 0 then subtotal_price / line_item_count else 0 end as avg_line_item_value,

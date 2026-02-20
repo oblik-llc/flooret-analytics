@@ -56,6 +56,11 @@ final as (
         orders.total_tax,
         orders.net_sales,
 
+        -- Refund metrics
+        orders.refund_subtotal,
+        orders.refund_total_tax,
+        orders.order_adjustment_amount,
+
         -- Discount metrics
         orders.discount_rate,
         orders.line_item_discount,

@@ -146,13 +146,14 @@ household_first_orders as (
     group by 1
 ),
 
--- Map each email to their household metrics
+-- Map each email to their primary household (most recent order wins)
 email_to_household as (
-    select distinct
+    select
         email,
         household_id
     from orders_with_household
     where household_id is not null
+    qualify row_number() over (partition by email order by processed_at desc) = 1
 ),
 
 -- EMAIL-BASED: Calculate days to order and conversion windows (business_rules.md section 12)
