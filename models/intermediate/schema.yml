@@ -249,6 +249,35 @@ models:
       - name: sample_order_type
         description: Classification of sample orders by product category
 
+  - name: int_order_lines_with_product
+    description: >
+      Order lines enriched with product hierarchy from seed_sku_lookup.
+      Adds product_line, product_category, bevel, wbr_product_subline,
+      and ISO week dimensions for WBR reporting.
+    columns:
+      - name: order_line_id
+        description: Unique order line identifier
+        tests:
+          - not_null
+
+      - name: sku
+        description: Product SKU
+
+      - name: product_line
+        description: Product line from seed (Modin, Silvan, Arista, Provenance)
+
+      - name: wbr_product_subline
+        description: WBR sub-line (Signature Enhanced, Base, etc.)
+
+      - name: iso_year
+        description: ISO year for WBR week numbering
+
+      - name: iso_week
+        description: ISO week number (1-53)
+
+      - name: iso_week_start
+        description: Monday start date of ISO week
+
   - name: int_ga4_funnel
     description: Session-level website funnel tracking with conversion and dropoff analysis
     config:

@@ -16,6 +16,10 @@ clean-targets:
   - "target"
   - "dbt_packages"
 
+seeds:
+  flooret_analytics:
+    +schema: staging
+
 models:
   flooret_analytics:
     staging:
@@ -27,3 +31,5 @@ models:
     marts:
       +materialized: table
       +schema: marts
+      wbr:
+        +schema: wbr

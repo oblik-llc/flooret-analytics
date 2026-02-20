@@ -1,0 +1,94 @@
+version: 2
+
+models:
+  - name: rpt_wbr_net_sales
+    description: >
+      WBR Page 2: Net Sales weekly and monthly.
+      Weekly uses ISO weeks (Monday-Sunday). Net Sales = subtotal_price (order header).
+      Includes w/w and y/y comparisons.
+    columns:
+      - name: grain
+        description: "Row grain: 'weekly' or 'monthly'"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['weekly', 'monthly']
+
+  - name: rpt_wbr_channel_mix
+    description: >
+      WBR Page 3: Sales by Channel.
+      Channels: DTC, Comm., MSR, Ind. Retail.
+      Channel attribution from salesperson field (order tags) and store.
+    columns:
+      - name: wbr_channel
+        description: WBR channel name
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['DTC', 'Comm.', 'MSR', 'Ind. Retail']
+
+  - name: rpt_wbr_product_performance
+    description: >
+      WBR Page 4: Product Line Performance.
+      Revenue by product_line (Modin/Silvan/Arista) and sub-line.
+      Uses line-item level revenue for Product type items only.
+      Includes T6W totals and w/w change.
+    columns:
+      - name: grain
+        description: "'product_line' or 'subline'"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['product_line', 'subline']
+
+      - name: product_line
+        description: Top-level product line (Modin, Silvan, Arista)
+        tests:
+          - not_null
+
+  - name: rpt_wbr_sku_performance
+    description: >
+      WBR Pages 5-7: Top Selling SKUs, Top Movers, Top 25 Performance.
+      SKU-level weekly and T6W/P6W performance with rankings and deltas.
+      Includes DTC benchmark and delta-vs-DTC for Top 25 analysis.
+    columns:
+      - name: sku
+        description: Product SKU
+        tests:
+          - not_null
+
+  - name: rpt_wbr_sample_orders
+    description: >
+      WBR Pages 8-9: Sample Orders and Ordered Sample SKUs.
+      Weekly and monthly counts with w/w and y/y comparisons.
+    columns:
+      - name: grain
+        description: "'weekly' or 'monthly'"
+        tests:
+          - not_null
+
+  - name: rpt_wbr_sample_sku_ranking
+    description: >
+      WBR Page 10: Top Ordered Sample SKUs.
+      Weekly and T6W rankings of sample SKUs by quantity ordered.
+    columns:
+      - name: sku
+        description: Sample SKU
+        tests:
+          - not_null
+
+  - name: rpt_wbr_provence_sampling
+    description: >
+      WBR Page 11: Provence (Provenance) Sampling.
+      Daily sample counts for new Provenance product launch tracking.
+      Split by SKU and size variant (7.5" vs 10").
+    columns:
+      - name: sku
+        description: Provenance sample SKU
+        tests:
+          - not_null
+
+      - name: size_variant
+        description: "Size: '7.5\"' or '10\"'"
+        tests:
+          - not_null
