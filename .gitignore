@@ -36,6 +36,10 @@ profiles.yml
 *.pem
 *.key
 keyfile.json
+service-account.json
+
+# Raw seed sources (Excel files) - CSV seeds in seeds/ are the versioned source of truth
+seed/
 
 # Temporary files
 *.log
