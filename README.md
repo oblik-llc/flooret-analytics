@@ -1,5 +1,7 @@
 # Flooret Analytics - dbt Project
 
+DO NOT USE THIS REPO - refer to the repo in oblik-infra-data-transformation
+
 Analytics transformation layer for Flooret's e-commerce data built with dbt and BigQuery.
 
 ## Project Status
